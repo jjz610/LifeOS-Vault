@@ -47,6 +47,7 @@ dialog[open]{display:flex;flex-direction:column}dialog::backdrop{background:rgba
 .sec{margin-top:12px}.lb{font-weight:700;margin-bottom:5px}
 .l0 .lb{color:var(--mute);font-weight:500;font-size:13px}.l1 .lb{font-size:20px}.l2 .lb{font-size:17px}.l3 .lb,.l4 .lb{font-size:15px}
 .lf{padding-left:8px;margin-top:8px}.lf .lb{font-size:14px}.lf textarea{min-height:40px}
+.ln.miss{color:var(--warn);opacity:1}.rc .t a{color:var(--ink);text-decoration:none;font-weight:600}.md img.miss{opacity:.5;font-size:13px}
 .l2{padding-left:8px}.l3{padding-left:16px}.l4,.l5,.l6{padding-left:24px}
 .sec textarea{line-height:1.65;resize:none;overflow:hidden;min-height:44px}
 .ef{padding:10px 14px;border-top:1px solid var(--line);display:flex;gap:8px;align-items:center;justify-content:space-between;color:var(--mute);font-size:13px}
@@ -79,7 +80,7 @@ dialog[open]{display:flex;flex-direction:column}dialog::backdrop{background:rgba
 <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.38.3/lib/msal-browser.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
 <script>
-const CFG={clientId:'ee55d4ab-d97a-49ae-8eee-3256eb44ff96',vault:'JZ-LifeOS',inbox:'00 Inbox',tpl:'Inbox capture template'};
+const CFG={clientId:'ee55d4ab-d97a-49ae-8eee-3256eb44ff96',vault:'JZ-LifeOS',inbox:'00 Inbox',notes:'01 Notes',src:'02 Sources',topics:'03 Topics',tpl:'Inbox capture template'};
 const G='https://graph.microsoft.com/v1.0',SCOPES=['Files.ReadWrite'];
 const $=s=>document.querySelector(s);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -101,9 +102,9 @@ const dbDel=p=>db?tx('readwrite',s=>s.delete(p)):mem.delete(p);
 async function token(){try{return(await pca.acquireTokenSilent({scopes:SCOPES,account:acct})).accessToken}catch(e){await pca.acquireTokenRedirect({scopes:SCOPES});throw e}}
 async function g(u,o={}){const r=await fetch(u.startsWith('http')?u:G+u,{...o,headers:{Authorization:'Bearer '+await token(),...(o.headers||{})}});if(!r.ok){const e=new Error('HTTP '+r.status);e.status=r.status;throw e}return r}
 const vurl=p=>`/me/drive/root:/${enc(CFG.vault+(p?'/'+p:''))}`;
-async function listAll(){const out=[],st=[''];while(st.length){const p=st.pop();let u=`${vurl(p)}:/children?$select=id,name,folder,eTag,lastModifiedDateTime&$top=200`;
+async function listAll(){const out=[],st=[''],A=new Map(),ad=(k,v)=>A.set(k,[...(A.get(k)||[]),v]);while(st.length){const p=st.pop();let u=`${vurl(p)}:/children?$select=id,name,folder,eTag,lastModifiedDateTime&$top=200`;
  while(u){const j=await(await g(u)).json();for(const it of j.value){if(it.name.startsWith('.'))continue;const rp=p?p+'/'+it.name:it.name;
- if(it.folder)st.push(rp);else if(/\.md$/i.test(it.name))out.push({path:rp,mtime:it.lastModifiedDateTime,etag:it.eTag})}u=j['@odata.nextLink']}}return out}
+ if(it.folder)st.push(rp);else if(/\.md$/i.test(it.name))out.push({path:rp,mtime:it.lastModifiedDateTime,etag:it.eTag});else if(IMG.test(it.name)){ad(rp.toLowerCase(),rp);ad(it.name.toLowerCase(),rp)}}u=j['@odata.nextLink']}}ATT=A;return out}
 async function sync(){setStatus('正在检查更新…');const remote=await listAll();const have=new Map((await dbAll()).map(n=>[n.path,n]));const live=new Set(remote.map(r=>r.path));
  for(const p of have.keys())if(!live.has(p))await dbDel(p);
  const todo=remote.filter(r=>!have.has(r.path)||have.get(r.path).mtime!==r.mtime||!have.get(r.path).etag);let done=0;
@@ -113,14 +114,9 @@ async function sync(){setStatus('正在检查更新…');const remote=await list
 /* 索引与列表 */
 async function load(){notes=(await dbAll()).sort((a,b)=>b.mtime.localeCompare(a.mtime));byTitle=new Map();
  for(const n of notes){n.title=base(n.path);n.cat=n.path.includes('/')?n.path.split('/')[0]:'根目录';n.lc=(n.title+'\n'+n.content).toLowerCase();n.fm=fmap(n.content);byTitle.set(n.title.toLowerCase(),n)}
- cats=[...new Set(notes.map(n=>n.cat))].sort();
- if(!sel){sel=new Set(LS.get('sel')||cats.filter(c=>/inbox|notes/i.test(c)));if(!sel.size)sel=new Set(cats)}
- drawCats();drawList();drawReview()}
-function drawCats(){$('#cats').innerHTML='<h3>分类</h3>'+cats.map(c=>`<label><input type="checkbox" value="${esc(c)}" ${sel.has(c)?'checked':''}><span>${esc(c)}</span><i>${notes.filter(n=>n.cat===c).length}</i></label>`).join('')}
-function drawList(){const q=($('#q').value||'').trim().toLowerCase();let r=notes.filter(n=>sel.has(n.cat)&&(!q||n.lc.includes(q))).slice(0,150);
- $('#list').innerHTML=r.length?r.map(n=>{let s=n.path.slice(0,n.path.lastIndexOf('/')+1||0)||'根目录';s=s.replace(/\/$/,'');
-  if(q){const i=n.content.toLowerCase().indexOf(q);if(i>=0&&!n.title.toLowerCase().includes(q))s=n.content.slice(Math.max(0,i-15),i+50).replace(/\s+/g,' ')}
-  return`<li><button type="button" data-p="${esc(n.path)}"><div class="t">${esc(n.title)}</div><div class="s">${esc(s)} · ${new Date(n.mtime).toLocaleDateString('zh-CN')}</div></button></li>`}).join(''):`<li class="empty">${sel.size?'没有匹配的笔记':'在左侧勾选要显示的分类'}</li>`}
+ for(const n of notes){n.bk=[];n.lk=[]}
+ for(const n of notes){n.lk=[...new Set([...n.content.matchAll(/\[\[([^\]|#]+)/g)].map(m=>m[1].trim().split('/').pop().toLowerCase()))].map(x=>byTitle.get(x)).filter(t=>t&&t!==n);for(const t of n.lk)t.bk.push(n)}
+ drawReview()}
 const setStatus=t=>{const e=$('#st');if(e)e.textContent=t};
 const toast=t=>{const e=$('#toast');e.textContent=t;e.classList.add('on');setTimeout(()=>e.classList.remove('on'),2400)};
 
@@ -128,7 +124,7 @@ const toast=t=>{const e=$('#toast');e.textContent=t;e.classList.add('on');setTim
 const LBL=/^([A-Za-z][A-Za-z ]*(?: \/ [A-Za-z ]+)?|[\u4e00-\u9fa5][\u4e00-\u9fa5 ]{0,10})([:：])[ \t]*(.*)$/;
 function splitFields(b){const pre=[],f=[];let c=null,n=0;
  for(const l of b.split('\n')){const m=l.match(LBL);if(m&&!m[3].startsWith('//')){n++;c={l:m[1],s:m[2],v:[m[3]]};f.push(c)}else if(c)c.v.push(l);else pre.push(l)}
- return n<3?null:{pre:pre.join('\n').trim(),f:f.map(x=>({l:x.l,s:x.s,v:x.v.join('\n').trim()}))}}
+ return n<3||pre.join('').trim()?null:{pre:'',f:f.map(x=>({l:x.l,s:x.s,v:x.v.join('\n').trim()}))}}
 function buildF(x){const it=[];if(x.pre.trim())it.push({t:x.pre.trim(),m:1});
  for(const f of x.f){const v=f.v.trim(),m=v.includes('\n');it.push({t:f.l+f.s+(v?(m?'\n':' ')+v:''),m})}
  return it.map((c,i)=>(i?(c.m||it[i-1].m?'\n\n':'\n'):'')+c.t).join('')}
@@ -139,7 +135,7 @@ function parse(m){let fm='';const f=m.match(/^---\r?\n[\s\S]*?\r?\n---[ \t]*(\r?
 function build(p){const o=[];if(p.fm.trim())o.push(p.fm.trim());
  for(const s of p.secs){const b=s.fx?buildF(s.fx):s.b.trim();if(s.h===null){if(b)o.push(b)}else o.push(s.h+(b?'\n\n'+b:''))}return o.join('\n\n')+'\n'}
 function md(t){let b=t.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/,'');
- b=b.replace(/!\[\[([^\]]+)\]\]/g,(m,a)=>/\.base(#|$)/i.test(a)?`<a href="#" data-v="${esc(a.split('#')[1]||'')}">打开回看视图：${esc(a.split('#')[1]||a)}</a>`:`<span class="embed">附件：${esc(a)}</span>`);
+ b=b.replace(/!\[\[([^\]]+)\]\]/g,(m,a)=>/\.base(#|$)/i.test(a)?`<a href="#" data-v="${esc(a.split('#')[1]||'')}">打开回看视图：${esc(a.split('#')[1]||a)}</a>`:IMG.test(a.split('|')[0].trim())?`<img data-att="${esc(a)}" alt="${esc(a.split('|')[0])}">`:`<span class="embed">附件：${esc(a)}</span>`);
  b=b.replace(/\[\[([^\]|#]+)(?:#[^\]|]*)?(?:\|([^\]]+))?\]\]/g,(m,x,al)=>{x=x.trim();return`<a href="#" data-w="${esc(x)}"${byTitle.has(x.toLowerCase())?'':' class="missing"'}>${esc((al||x).trim())}</a>`});
  return marked.parse(b,{breaks:true}).replace(/<script[\s\S]*?<\/script>/gi,'')}
 
@@ -147,13 +143,15 @@ function md(t){let b=t.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/,'');
 const grow=t=>{t.style.height='auto';t.style.height=t.scrollHeight+4+'px'};
 const sec=(label,k,v,lv)=>`<div class="sec l${lv}"><div class="lb">${esc(label)}</div><textarea data-k="${k}">${esc(v)}</textarea></div>`;
 function drawEd(){$('#et').textContent=cur.title;$('#ep').textContent=cur.path;$('#tE').className=mode==='edit'?'on':'';$('#tV').className=mode==='view'?'on':'';
- const b=$('#eb');if(mode==='view'){b.innerHTML=`<div class="md">${md(build(P))}</div>`;return}
+ const b=$('#eb');if(mode==='view'){b.innerHTML=`<div class="md">${md(build(P))}</div>`;hydrate(b,cur.path);return}
  let h='';if(P.fm.trim())h+=sec('属性','fm',P.fm,0);
  P.secs.forEach((s,i)=>{const lv=s.h?s.h.match(/^#+/)[0].length:0,t=s.h?s.h.replace(/^#+\s+/,''):'正文';
   if(s.fx){if(s.h)h+=`<div class="sec l${lv}"><div class="lb">${esc(t)}</div></div>`;if(s.fx.pre)h+=sec('说明',i+':pre',s.fx.pre,'f');s.fx.f.forEach((f,j)=>{h+=sec(f.l,i+':'+j,f.v,'f')})}
   else if(s.h===null){if(s.b)h+=sec('正文',i,s.b,0)}else h+=sec(t,i,s.b,lv)});
  b.innerHTML=h||'<div class="empty">这篇笔记是空的</div>';b.querySelectorAll('textarea').forEach(grow)}
-function openNote(p,foc){const n=notes.find(x=>x.path===p);if(!n)return;cur=n;P=parse(n.content);dirty=false;mode='edit';setDirty(false);drawEd();if(!$('#ed').open)$('#ed').showModal();$('#eb').querySelectorAll('textarea').forEach(grow);$('#eb').scrollTop=0;
+function openNote(p,foc){const n=notes.find(x=>x.path===p);if(!n)return;cur=n;P=parse(n.content);dirty=false;RO=n.cat===CFG.src;mode=RO?'view':(foc||n.cat===CFG.inbox)?'edit':'view';
+ if(foc&&!RO&&P.secs.findIndex(x=>x.h&&/^#+\s+My observations\s*$/i.test(x.h))<0)P.secs.push({h:'## My observations',b:'',fx:null});
+ setDirty(false);$('#tE').hidden=RO;$('#sv').hidden=RO;drawEd();if(RO)$('#es').textContent='原始材料只读，不会被改动';if(!$('#ed').open)$('#ed').showModal();$('#eb').querySelectorAll('textarea').forEach(grow);$('#eb').scrollTop=0;
  if(foc){const i=P.secs.findIndex(x=>x.h&&/^#+\s+My observations\s*$/i.test(x.h)),t=i>=0&&$(`#eb textarea[data-k="${i}"]`);if(t){t.focus();t.scrollIntoView({block:'center'})}}}
 function setDirty(d){dirty=d;$('#es').textContent=d?'有未保存的修改':'没有改动'}
 function closeEd(){if(dirty&&!confirm('有未保存的修改，确定放弃吗？'))return;$('#ed').close()}
@@ -182,61 +180,70 @@ async function capture(){const title=$('#ct').value.trim(),text=$('#cb').value.t
  catch(e){toast(e.status===409?'同名笔记已存在，请换个标题':'保存失败，请检查网络后重试')}
  $('#cs').disabled=false}
 
-/* 回看清单（对应 Base：04 Output/回看设计预览） */
-const RV='04 Output/回看设计预览',STS=['待我回看','已写想法','看过，暂不写'],TOP=['数据整理','个人知识管理','AI'],VW=['待我回看','我写过的','全部收录','看板','检查状态',...TOP];
-let rvV='待我回看';
+/* 回看页：直接读取 00 Inbox / 01 Notes / 02 Sources / 03 Topics */
+const STS=['待我回看','已写想法','看过，暂不写'],IMG=/\.(png|jpe?g|gif|webp|svg|bmp)$/i,BLOB=new Map();
+let rvV='待我回看',ATT=new Map(),RO=false;
+const DATED=/^\d{4}-\d{2}-\d{2}/,isCap=n=>n.cat===CFG.src||n.cat===CFG.inbox||DATED.test(n.title);
 const unq=v=>v.replace(/^(["'])(.*)\1$/,'$2');
 function fmap(c){const m=c.match(/^---\r?\n([\s\S]*?)\r?\n---/),o={};if(!m)return o;let k=null,a;
  for(const l of m[1].split(/\r?\n/)){if(a=l.match(/^([\w\u4e00-\u9fa5-]+):[ \t]*(.*)$/)){k=a[1];o[k]=a[2].trim()?[unq(a[2].trim())]:[]}else if(k&&(a=l.match(/^\s*-\s+(.*)$/)))o[k].push(unq(a[1].trim()))}return o}
 const stOk=n=>{const s=n.fm.review_status||[];return s.length===1&&STS.includes(s[0])};
 const needChk=n=>(n.fm.review_status||[]).length>0&&!stOk(n);
-const linked=(n,t)=>new RegExp('\\[\\[\\s*(?:[^\\]|#]*/)?'+t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\s*[|\\]#]').test(n.content);
-function inV(n,v){const s=n.fm.review_status||[];
- if(v==='待我回看')return !s.length||(stOk(n)&&s[0]==='待我回看');
- if(v==='我写过的')return stOk(n)&&s[0]==='已写想法';
- if(v==='检查状态')return needChk(n);
- return TOP.includes(v)?linked(n,v):true}
-function lk(v,lab){const m=String(v).match(/\[\[([^\]|#]+)(?:#[^\]|]*)?(?:\|([^\]]+))?\]\]/);if(!m)return esc(v);const x=m[1].trim().split('/').pop(),t=byTitle.get(x.toLowerCase()),s=esc(lab||(m[2]||x).trim());return t?`<a href="#" data-p="${esc(t.path)}">${s}</a>`:`<span class="miss">${s}</span>`}
-function card(n){const f=n.fm,s=f.review_status||[],cur=stOk(n)?s[0]:'',h=(n.content.match(/^#\s+(.+)$/m)||[])[1]||n.title;
- const L=[['知识笔记',f.knowledge_note],['原始材料',f.source_note],['逐字稿',f.transcript]].filter(x=>x[1]&&x[1][0]).map(x=>lk(x[1][0],x[0])).join(' · ');
+const VWS=()=>['收件箱','待我回看','我写过的','看板','检查状态','全部笔记','原始材料',...notes.filter(n=>n.cat===CFG.topics).map(n=>n.title)];
+function listFor(v){const P0=notes.filter(n=>n.cat===CFG.notes&&n.title!==CFG.tpl),s=n=>n.fm.review_status||[];
+ if(v==='收件箱')return notes.filter(n=>n.cat===CFG.inbox&&n.title!==CFG.tpl);
+ if(v==='原始材料')return notes.filter(n=>n.cat===CFG.src);
+ if(v==='待我回看')return P0.filter(n=>!s(n).length||(stOk(n)&&s(n)[0]==='待我回看'));
+ if(v==='我写过的')return P0.filter(n=>stOk(n)&&s(n)[0]==='已写想法');
+ if(v==='检查状态')return P0.filter(needChk);
+ const t=notes.find(n=>n.cat===CFG.topics&&n.title===v);return t?P0.filter(n=>n.lk.includes(t)):P0}
+function findAtt(ref,from){try{ref=decodeURIComponent(ref)}catch(e){}ref=ref.split('|')[0].trim().replace(/^\.\//,'');const d=from.includes('/')?from.slice(0,from.lastIndexOf('/')):'';
+ for(const x of [d+'/'+ref,ref].map(x=>x.replace(/^\//,'').toLowerCase()))if(ATT.has(x))return ATT.get(x)[0];
+ const l=ATT.get(ref.split('/').pop().toLowerCase())||[];return l.find(p=>/attachment/i.test(p))||l[0]}
+async function hydrate(root,from){for(const im of root.querySelectorAll('img')){const src=im.getAttribute('data-att')||im.getAttribute('src')||'';
+ if(/^(https?:|data:|blob:)/i.test(src)){im.referrerPolicy='no-referrer';continue}
+ const p=findAtt(src,from);if(!p){im.alt='图片未找到：'+src;im.classList.add('miss');continue}
+ try{if(!BLOB.has(p))BLOB.set(p,URL.createObjectURL(await(await g(`${vurl(p)}:/content`)).blob()));im.src=BLOB.get(p)}catch(e){im.alt='图片加载失败：'+p;im.classList.add('miss')}}}
+function card(n){const f=n.fm,s=f.review_status||[],cur=stOk(n)?s[0]:'',h=(n.content.match(/^#\s+(.+)$/m)||[])[1]||n.title,isN=n.cat===CFG.notes&&n.title!==CFG.tpl;
+ const A=(t,l)=>`<a href="#" data-p="${esc(t.path)}">${esc(l)}</a>`,tp=n.lk.filter(t=>t.cat===CFG.topics).map(t=>A(t,t.title)).join('');
+ const isS=isCap(n),rel=isS?n.bk.filter(b=>b.cat===CFG.notes&&!isCap(b)):n.lk.filter(isCap),lab=isS?'知识笔记':'原始材料';
+ const L=rel.slice(0,4).map((t,i)=>A(t,lab+(rel.length>1?i+1:''))).join(' · ')+(rel.length&&n.cat===CFG.inbox?' · 已有知识笔记，可归档到 02 Sources':'');
  const ph=cur?'':`<option value="" selected disabled>${s.length?'需检查：'+esc(s.join('、')):'（未设置）'}</option>`;
- return`<div class="rc"><div class="t">${esc(h)}</div><div class="tp">${(f.topics||[]).map(x=>lk(x)).join('')}</div><div class="ln">${L}</div>
- <div class="ra"><select data-p="${esc(n.path)}" aria-label="回看状态">${ph}${STS.map(x=>`<option${x===cur?' selected':''}>${x}</option>`).join('')}</select><button class="btn" data-w="${esc(n.path)}" type="button">写想法</button></div></div>`}
-function drawReview(){const el=$('#rv');if(!el)return;const all=notes.filter(n=>n.path.startsWith(RV+'/')&&(n.fm.type||[])[0]==='review-preview');
- $('#vc').innerHTML=VW.map(v=>`<button type="button" data-v="${esc(v)}" class="${v===rvV?'on':''}">${esc(v)}<i>${v==='看板'||v==='全部收录'?all.length:all.filter(n=>inV(n,v)).length}</i></button>`).join('');
- if(!all.length){el.innerHTML=`<div class="empty">没有在 ${RV} 里找到 type: review-preview 的笔记</div>`;return}
- if(rvV==='看板'){el.innerHTML='<div class="kb">'+[...STS,'需检查'].map(c=>{const r=all.filter(n=>c==='需检查'?needChk(n):stOk(n)?n.fm.review_status[0]===c:c==='待我回看'&&!(n.fm.review_status||[]).length);
-  return r.length||c!=='需检查'?`<div class="kc"><h3>${esc(c)} <i>${r.length}</i></h3>${r.map(card).join('')||'<div class="empty">空</div>'}</div>`:''}).join('')+'</div>';return}
- const r=all.filter(n=>inV(n,rvV));el.innerHTML=r.length?r.map(card).join(''):'<div class="empty">这个视图里暂时没有笔记</div>'}
-function setPage(p){$('#pg1').hidden=p!==1;$('#pg2').hidden=p!==2;document.querySelectorAll('.pt button').forEach(b=>b.classList.toggle('on',+b.dataset.pg===p))}
-function gotoView(v){v=v==='回看状态看板'?'看板':v;rvV=VW.includes(v)?v:'全部收录';drawReview()}
+ const act=isN?`<div class="ra"><select data-p="${esc(n.path)}" aria-label="回看状态">${ph}${STS.map(x=>`<option${x===cur?' selected':''}>${x}</option>`).join('')}</select><button class="btn" data-w="${esc(n.path)}" type="button">写想法</button></div>`
+  :n.cat===CFG.inbox?`<div class="ra"><button class="btn g" data-o="${esc(n.path)}" type="button">编辑</button></div>`:'';
+ return`<div class="rc"><div class="t"><a href="#" data-p="${esc(n.path)}">${esc(h)}</a></div><div class="ln">${esc(n.cat)} · ${new Date(n.mtime).toLocaleDateString('zh-CN')}</div>${tp?`<div class="tp">${tp}</div>`:''}${L?`<div class="ln">${L}</div>`:n.cat===CFG.src?'<div class="ln miss">已归档，但没有知识笔记引用它</div>':''}${act}</div>`}
+function drawReview(){const el=$('#rv');if(!el)return;const q=($('#q').value||'').trim().toLowerCase(),V=VWS();if(!V.includes(rvV))rvV='待我回看';
+ $('#vc').innerHTML=V.map(v=>`<button type="button" data-v="${esc(v)}" class="${v===rvV&&!q?'on':''}">${esc(v)}<i>${listFor(v==='看板'?'全部笔记':v).length}</i></button>`).join('');
+ if(q){const r=notes.filter(n=>n.lc.includes(q)).slice(0,80);el.innerHTML=`<div class="ln">搜索结果 ${r.length} 条</div>`+(r.map(card).join('')||'<div class="empty">没有匹配的笔记</div>');return}
+ if(rvV==='看板'){const all=listFor('全部笔记'),sv=n=>n.fm.review_status||[];
+  el.innerHTML='<div class="kb">'+[...STS,'需检查'].map(c=>{const r=all.filter(n=>c==='需检查'?needChk(n):stOk(n)?sv(n)[0]===c:c==='待我回看'&&!sv(n).length);
+   return r.length||c!=='需检查'?`<div class="kc"><h3>${esc(c)} <i>${r.length}</i></h3>${r.slice(0,60).map(card).join('')||'<div class="empty">空</div>'}</div>`:''}).join('')+'</div>';return}
+ const r=listFor(rvV);el.innerHTML=r.length?r.slice(0,150).map(card).join(''):'<div class="empty">这个视图里暂时没有笔记</div>'}
+function gotoView(v){rvV=v==='回看状态看板'?'看板':v;drawReview()}
 function withStatus(c,val){const m=c.match(/^---\r?\n([\s\S]*?)\r?\n---/);if(!m)return null;const nl=c.includes('\r\n')?'\r\n':'\n',y=m[1].split(/\r?\n/),i=y.findIndex(l=>/^review_status:/.test(l));let j=i+1;
  if(i>=0)while(j<y.length&&/^\s*-\s/.test(y[j]))j++;
  y.splice(i<0?y.length:i,i<0?0:j-i,'review_status:','  - '+val);return'---'+nl+y.join(nl)+nl+'---'+c.slice(m[0].length)}
-async function setSt(p,val){const n=notes.find(x=>x.path===p),out=n&&withStatus(n.content,val);if(!out)return toast('这张卡没有属性区，无法改状态');
+async function setSt(p,val){const n=notes.find(x=>x.path===p);if(!n||n.cat!==CFG.notes)return toast('只有 01 Notes 里的笔记可以改状态');
+ let out=withStatus(n.content,val);if(!out)out=`---\nreview_status:\n  - ${val}\n---\n\n`+n.content;
  try{const h={'Content-Type':'text/markdown'};if(n.etag)h['If-Match']=n.etag;const j=await(await g(`${vurl(p)}:/content`,{method:'PUT',headers:h,body:out})).json();
   await dbPut({path:p,mtime:j.lastModifiedDateTime,etag:j.eTag,content:out});await load();toast('已改为：'+val)}
- catch(e){toast(e.status===412?'这张卡刚在别处被改过，已刷新，请再试一次':'保存失败，请检查网络后重试');if(e.status===412)sync().catch(()=>{});drawReview()}}
+ catch(e){toast(e.status===412?'这篇笔记刚在别处被改过，已刷新，请再试一次':'保存失败，请检查网络后重试');if(e.status===412)sync().catch(()=>{});drawReview()}}
 
 function shell(){$('#app').innerHTML=`
  <div class="top"><b>JZ-LifeOS</b><span><span id="st"></span> <button id="out" type="button">退出</button></span></div>
- <nav class="pt"><button class="on" data-pg="1" type="button">笔记</button><button data-pg="2" type="button">回看</button></nav>
- <div id="pg1"><section class="cap"><h2>Quick Capture</h2><input type="text" id="ct" placeholder="标题（可不填）" autocomplete="off"><textarea id="cb" placeholder="想到什么，先记下来…"></textarea>
+ <section class="cap"><h2>Quick Capture</h2><input type="text" id="ct" placeholder="标题（可不填）" autocomplete="off"><textarea id="cb" placeholder="想到什么，先记下来…"></textarea>
   <div class="row"><button class="btn" id="cs" type="button">存入 Inbox</button></div></section>
- <div class="cols"><aside class="cats" id="cats"></aside><main><input type="search" id="q" placeholder="搜索标题和正文" autocomplete="off"><ul class="list" id="list"></ul></main></div></div>
- <div id="pg2" hidden><div class="chips" id="vc"></div><div id="rv"></div></div>`;
- let tm;$('#q').oninput=()=>{clearTimeout(tm);tm=setTimeout(drawList,150)};
+ <input type="search" id="q" placeholder="搜索全部笔记的标题和正文" autocomplete="off" style="margin-top:14px">
+ <div class="chips" id="vc"></div><div id="rv"></div>`;
+ let tm;$('#q').oninput=()=>{clearTimeout(tm);tm=setTimeout(drawReview,200)};
  $('#cs').onclick=capture;$('#out').onclick=()=>pca.logoutRedirect({account:acct});
- $('#cats').onchange=e=>{const c=e.target.value;e.target.checked?sel.add(c):sel.delete(c);LS.set('sel',[...sel]);drawList()};
- $('#list').onclick=e=>{const b=e.target.closest('button[data-p]');if(b)openNote(b.dataset.p)};
- $('.pt').onclick=e=>{const b=e.target.closest('button[data-pg]');if(b)setPage(+b.dataset.pg)};
- $('#vc').onclick=e=>{const b=e.target.closest('button[data-v]');if(b){rvV=b.dataset.v;drawReview()}};
- $('#rv').onclick=e=>{const a=e.target.closest('a[data-p]');if(a){e.preventDefault();return openNote(a.dataset.p)}const w=e.target.closest('button[data-w]');if(w)openNote(w.dataset.w,1)};
+ $('#vc').onclick=e=>{const b=e.target.closest('button[data-v]');if(b){$('#q').value='';rvV=b.dataset.v;drawReview()}};
+ $('#rv').onclick=e=>{const a=e.target.closest('a[data-p]');if(a){e.preventDefault();return openNote(a.dataset.p)}const w=e.target.closest('button[data-w]');if(w)return openNote(w.dataset.w,1);const o=e.target.closest('button[data-o]');if(o)openNote(o.dataset.o)};
  $('#rv').onchange=e=>{const x=e.target.closest('select[data-p]');if(x)setSt(x.dataset.p,x.value)}}
 $('#x').onclick=closeEd;$('#ed').addEventListener('cancel',e=>{if(dirty){e.preventDefault();closeEd()}});$('#sv').onclick=saveNote;
 $('#tE').onclick=()=>{mode='edit';drawEd()};$('#tV').onclick=()=>{mode='view';drawEd()};
 $('#eb').addEventListener('input',e=>{const t=e.target;if(!t.dataset.k)return;const k=t.dataset.k;if(k==='fm')P.fm=t.value;else{const[i,j]=k.split(':');if(j===undefined)P.secs[+i].b=t.value;else if(j==='pre')P.secs[+i].fx.pre=t.value;else P.secs[+i].fx.f[+j].v=t.value}grow(t);if(!dirty)setDirty(true)});
-$('#eb').addEventListener('click',e=>{const v=e.target.closest('a[data-v]');if(v){e.preventDefault();if(dirty&&!confirm('有未保存的修改，确定放弃吗？'))return;$('#ed').close();setPage(2);gotoView(v.dataset.v);return}const a=e.target.closest('a[data-w]');if(!a)return;e.preventDefault();const t=byTitle.get(a.dataset.w.toLowerCase());
+$('#eb').addEventListener('click',e=>{const v=e.target.closest('a[data-v]');if(v){e.preventDefault();if(dirty&&!confirm('有未保存的修改，确定放弃吗？'))return;$('#ed').close();gotoView(v.dataset.v);return}const a=e.target.closest('a[data-w]');if(!a)return;e.preventDefault();const t=byTitle.get(a.dataset.w.toLowerCase());
  if(!t)return toast('这篇笔记还不存在');if(dirty&&!confirm('有未保存的修改，确定放弃吗？'))return;openNote(t.path)});
 
 async function main(){await openDB();let r=null;try{r=await pca.handleRedirectPromise()}catch(e){console.error(e)}
