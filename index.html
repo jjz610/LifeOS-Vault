@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>JZ-LifeOS</title>
+<style>
+:root{--bg:#EEF2F0;--panel:#fff;--ink:#1B2522;--mute:#62706B;--line:#D5DDD9;--accent:#0F6E66;--accent-ink:#fff;--warn:#B4472B;
+--sans:system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+--serif:"Noto Serif SC","Source Han Serif SC","Songti SC",Georgia,serif;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root{--bg:#101615;--panel:#172120;--ink:#E3EBE8;--mute:#8FA19B;--line:#2A3835;--accent:#5CC4B8;--accent-ink:#0B1412;--warn:#E58A6E}}
+*,*::before,*::after{box-sizing:inherit}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);-webkit-text-size-adjust:100%}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:720px;margin:0 auto;padding:0 16px 48px}
+header{position:sticky;top:env(safe-area-inset-top,0px);background:var(--bg);padding:12px 0 8px;z-index:5}
+.bar{display:flex;gap:8px}
+.bar input{flex:1;min-width:0;padding:11px 14px;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
+.btn{border:0;border-radius:10px;padding:0 16px;background:var(--accent);color:var(--accent-ink);font-weight:600;min-height:44px}
+.btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--line);font-weight:500}
+.meta{display:flex;justify-content:space-between;align-items:center;color:var(--mute);font-size:13px;padding:8px 2px 0;min-height:30px}
+.meta button{background:none;border:0;color:var(--mute);text-decoration:underline;padding:4px}
+ul.list{list-style:none;margin:8px 0 0;padding:0;background:var(--panel);border-radius:12px;border:1px solid var(--line)}
+ul.list li{border-top:1px solid var(--line)}
+ul.list li:first-child{border-top:0}
+ul.list button{display:block;width:100%;text-align:left;background:none;border:0;padding:13px 16px}
+.t{font-size:16px;font-weight:600}
+.s{color:var(--mute);font-size:13px;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.s mark{background:none;color:var(--accent);font-weight:600}
+.empty{padding:28px 16px;text-align:center;color:var(--mute)}
+article{display:none}
+article.on{display:block}
+article h1.nt{font-family:var(--serif);font-size:28px;line-height:1.3;margin:18px 0 4px}
+.sub{color:var(--mute);font-size:13px;margin-bottom:18px}
+.md{font-family:var(--serif);font-size:17px;line-height:1.85;overflow-wrap:anywhere}
+.md h1,.md h2,.md h3{line-height:1.35;margin:1.6em 0 .5em}
+.md blockquote{margin:1em 0;padding:.1em 1em;border-left:3px solid var(--accent);color:var(--mute)}
+.md pre{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px;overflow-x:auto;font-size:14px;line-height:1.5}
+.md code{font-size:.9em;background:var(--panel);padding:.1em .35em;border-radius:4px}
+.md pre code{background:none;padding:0}
+.md table{border-collapse:collapse;display:block;overflow-x:auto}
+.md th,.md td{border:1px solid var(--line);padding:6px 10px}
+.md img{max-width:100%}
+.md a{color:var(--accent)}
+.md a.missing{color:var(--warn);text-decoration:line-through}
+.embed{color:var(--mute);font-size:14px;border:1px dashed var(--line);border-radius:6px;padding:2px 8px}
+.back{margin:10px 0 0;border:0;background:none;color:var(--accent);padding:8px 0;font-weight:600}
+.bl{margin-top:36px;border-top:1px solid var(--line);padding-top:14px}
+.bl h2{font-size:15px;margin:0 0 8px}
+.bl button{display:block;background:none;border:0;color:var(--accent);padding:6px 0;text-align:left}
+.login{text-align:center;padding:90px 0}
+.login h1{font-family:var(--serif);font-size:30px;margin:0 0 8px}
+.login p{color:var(--mute);margin:0 0 24px}
+dialog{width:min(560px,calc(100% - 24px));border:1px solid var(--line);border-radius:14px;background:var(--panel);color:var(--ink);padding:16px}
+dialog::backdrop{background:rgba(0,0,0,.45)}
+dialog input,dialog textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:11px 12px;background:var(--bg);margin-bottom:10px}
+dialog textarea{min-height:220px;resize:vertical;line-height:1.6}
+.row{display:flex;gap:8px;justify-content:flex-end}
+.hint{color:var(--mute);font-size:13px;margin:0 0 10px}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:999px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s}
+.toast.on{opacity:1}
+@media(prefers-reduced-motion:reduce){.toast{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+
+<dialog id="dlg">
+  <p class="hint">会保存到 Inbox 文件夹，并自动加上 mobile-inbox 标签。</p>
+  <input id="nt" placeholder="标题（可不填）" autocomplete="off">
+  <textarea id="nb" placeholder="写点什么…"></textarea>
+  <div class="row">
+    <button class="btn ghost" id="cancel" type="button">取消</button>
+    <button class="btn" id="save" type="button">保存笔记</button>
+  </div>
+</dialog>
+<div class="toast" id="toast" role="status"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.38.3/lib/msal-browser.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+<script>
+/* ===== 只需要改这里 ===== */
+const CFG = {
+  clientId: 'ee55d4ab-d97a-49ae-8eee-3256eb44ff96',   // Azure 应用注册里的“应用程序(客户端) ID”
+  vault: 'JZ-LifeOS',           // OneDrive 根目录下的 vault 文件夹名
+  inbox: 'Inbox'                // 手机新建笔记存放的子文件夹
+};
+/* ======================== */
+
+const G = 'https://graph.microsoft.com/v1.0';
+const SCOPES = ['Files.ReadWrite'];
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const enc = p => p.split('/').map(encodeURIComponent).join('/');
+const base = p => p.split('/').pop().replace(/\.md$/i, '');
+
+const pca = new msal.PublicClientApplication({
+  auth: { clientId: CFG.clientId, authority: 'https://login.microsoftonline.com/common',
+          redirectUri: location.origin + location.pathname },
+  cache: { cacheLocation: 'localStorage' }
+});
+let acct = null, notes = [], byTitle = new Map(), back = new Map(), cur = null;
+
+/* ---------- 本地缓存 (IndexedDB，失败时退回内存) ---------- */
+let db = null; const mem = new Map();
+function openDB() {
+  return new Promise(res => {
+    try {
+      const r = indexedDB.open('vault-reader', 1);
+      r.onupgradeneeded = () => r.result.createObjectStore('notes', { keyPath: 'path' });
+      r.onsuccess = () => { db = r.result; res(); };
+      r.onerror = () => res();
+    } catch (e) { res(); }
+  });
+}
+const tx = (m, fn) => new Promise(res => {
+  if (!db) return res(fn(null));
+  const t = db.transaction('notes', m), s = t.objectStore('notes'); const rq = fn(s);
+  t.oncomplete = () => res(rq && rq.result); t.onerror = () => res();
+});
+const dbAll = async () => db ? (await tx('readonly', s => s.getAll())) || [] : [...mem.values()];
+const dbPut = n => db ? tx('readwrite', s => s.put(n)) : mem.set(n.path, n);
+const dbDel = p => db ? tx('readwrite', s => s.delete(p)) : mem.delete(p);
+
+/* ---------- 登录与 Graph ---------- */
+async function token() {
+  try { return (await pca.acquireTokenSilent({ scopes: SCOPES, account: acct })).accessToken; }
+  catch (e) { await pca.acquireTokenRedirect({ scopes: SCOPES }); throw e; }
+}
+async function g(u, opt = {}) {
+  const r = await fetch(u.startsWith('http') ? u : G + u,
+    { ...opt, headers: { Authorization: 'Bearer ' + await token(), ...(opt.headers || {}) } });
+  if (!r.ok) { const e = new Error('HTTP ' + r.status); e.status = r.status; throw e; }
+  return r;
+}
+const vaultUrl = p => `/me/drive/root:/${enc(CFG.vault + (p ? '/' + p : ''))}`;
+
+async function listAll() {
+  const out = [], stack = [''];
+  while (stack.length) {
+    const p = stack.pop();
+    let url = `${vaultUrl(p)}:/children?$select=id,name,folder,lastModifiedDateTime&$top=200`;
+    while (url) {
+      const j = await (await g(url)).json();
+      for (const it of j.value) {
+        if (it.name.startsWith('.')) continue;           // 跳过 .obsidian 等隐藏目录
+        const rp = p ? p + '/' + it.name : it.name;
+        if (it.folder) stack.push(rp);
+        else if (/\.md$/i.test(it.name)) out.push({ path: rp, mtime: it.lastModifiedDateTime });
+      }
+      url = j['@odata.nextLink'];
+    }
+  }
+  return out;
+}
+
+async function sync() {
+  setStatus('正在检查更新…');
+  const remote = await listAll();
+  const have = new Map((await dbAll()).map(n => [n.path, n]));
+  const live = new Set(remote.map(r => r.path));
+  for (const p of have.keys()) if (!live.has(p)) await dbDel(p);
+  const todo = remote.filter(r => !have.has(r.path) || have.get(r.path).mtime !== r.mtime);
+  let done = 0;
+  await Promise.all(Array.from({ length: 6 }, async () => {
+    while (todo.length) {
+      const r = todo.shift();
+      const content = await (await g(`${vaultUrl(r.path)}:/content`)).text();
+      await dbPut({ path: r.path, mtime: r.mtime, content });
+      setStatus(`正在同步 ${++done} 篇…`);
+    }
+  }));
+  await load();
+  setStatus(`共 ${notes.length} 篇 · 刚刚同步`);
+}
+
+/* ---------- 索引 ---------- */
+async function load() {
+  notes = (await dbAll()).sort((a, b) => b.mtime.localeCompare(a.mtime));
+  byTitle = new Map(); back = new Map();
+  for (const n of notes) { n.title = base(n.path); byTitle.set(n.title.toLowerCase(), n); n.lc = (n.title + '\n' + n.content).toLowerCase(); }
+  for (const n of notes) for (const m of n.content.matchAll(/(?<!!)\[\[([^\]|#]+)/g)) {
+    const t = byTitle.get(m[1].trim().toLowerCase());
+    if (t && t !== n) { if (!back.has(t.path)) back.set(t.path, new Set()); back.get(t.path).add(n); }
+  }
+  renderList($('#q') ? $('#q').value : '');
+}
+
+/* ---------- 界面 ---------- */
+function shell() {
+  $('#app').innerHTML = `
+  <div id="home">
+    <header>
+      <div class="bar">
+        <input id="q" type="search" placeholder="搜索标题和正文" autocomplete="off">
+        <button class="btn" id="new" type="button">新建</button>
+      </div>
+      <div class="meta"><span id="st"></span><button id="out" type="button">退出登录</button></div>
+    </header>
+    <ul class="list" id="list"></ul>
+  </div>
+  <article id="view"></article>`;
+  let tm; $('#q').oninput = e => { clearTimeout(tm); tm = setTimeout(() => renderList(e.target.value), 150); };
+  $('#new').onclick = () => $('#dlg').showModal();
+  $('#out').onclick = () => pca.logoutRedirect({ account: acct });
+  $('#list').onclick = e => { const b = e.target.closest('button[data-p]'); if (b) openNote(b.dataset.p); };
+}
+const setStatus = t => { const e = $('#st'); if (e) e.textContent = t; };
+
+function renderList(q) {
+  q = (q || '').trim().toLowerCase();
+  let rows = notes;
+  if (q) rows = notes.filter(n => n.lc.includes(q)).sort((a, b) =>
+    (b.title.toLowerCase().includes(q)) - (a.title.toLowerCase().includes(q)));
+  rows = rows.slice(0, 120);
+  $('#list').innerHTML = rows.length ? rows.map(n => {
+    const dir = n.path.includes('/') ? n.path.slice(0, n.path.lastIndexOf('/')) : '根目录';
+    let snip = dir;
+    if (q) {
+      const i = n.content.toLowerCase().indexOf(q);
+      if (i >= 0) {
+        const a = Math.max(0, i - 18), s = n.content.slice(a, i + q.length + 40).replace(/\s+/g, ' ');
+        snip = esc(s).replace(new RegExp(esc(q).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'ig'), m => `<mark>${m}</mark>`);
+        return row(n, snip);
+      }
+    }
+    return row(n, esc(snip));
+  }).join('') : `<li class="empty">${q ? '没有找到匹配的笔记' : '还没有笔记，等待同步完成'}</li>`;
+}
+const row = (n, s) => `<li><button type="button" data-p="${esc(n.path)}"><div class="t">${esc(n.title)}</div><div class="s">${s}</div></button></li>`;
+
+function openNote(p) {
+  const n = notes.find(x => x.path === p); if (!n) return;
+  cur = n;
+  let body = n.content.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/, '');
+  body = body.replace(/!\[\[([^\]]+)\]\]/g, (m, a) => `<span class="embed">附件：${esc(a)}</span>`);
+  body = body.replace(/\[\[([^\]|#]+)(?:#[^\]|]*)?(?:\|([^\]]+))?\]\]/g,
+    (m, t, al) => `<a href="#" data-w="${esc(t.trim())}">${esc((al || t).trim())}</a>`);
+  const html = marked.parse(body, { breaks: true }).replace(/<script[\s\S]*?<\/script>/gi, '');
+  const bl = [...(back.get(n.path) || [])];
+  const d = new Date(n.mtime).toLocaleString('zh-CN', { hour12: false });
+  $('#view').innerHTML = `
+    <button class="back" id="bk" type="button">‹ 返回列表</button>
+    <h1 class="nt">${esc(n.title)}</h1>
+    <div class="sub">${esc(n.path)} · 修改于 ${d}</div>
+    <div class="md">${html}</div>
+    ${bl.length ? `<div class="bl"><h2>被这些笔记链接（${bl.length}）</h2>${bl.map(b => `<button type="button" data-p="${esc(b.path)}">${esc(b.title)}</button>`).join('')}</div>` : ''}`;
+  $('#home').style.display = 'none'; $('#view').classList.add('on'); scrollTo(0, 0);
+  $('#bk').onclick = closeNote;
+  $('#view').querySelectorAll('.md a[data-w]').forEach(a => {
+    if (!byTitle.has(a.dataset.w.toLowerCase())) a.classList.add('missing');
+  });
+  $('#view').onclick = e => {
+    const w = e.target.closest('a[data-w]'), b = e.target.closest('button[data-p]');
+    if (w) { e.preventDefault(); const t = byTitle.get(w.dataset.w.toLowerCase()); t ? openNote(t.path) : toast('这篇笔记还不存在'); }
+    else if (b) openNote(b.dataset.p);
+  };
+}
+function closeNote() { $('#view').classList.remove('on'); $('#home').style.display = ''; }
+
+function toast(t) { const e = $('#toast'); e.textContent = t; e.classList.add('on'); setTimeout(() => e.classList.remove('on'), 2200); }
+
+/* ---------- 新建笔记（只写入 Inbox，不覆盖已有文件） ---------- */
+$('#cancel').onclick = () => $('#dlg').close();
+$('#save').onclick = async () => {
+  const text = $('#nb').value.trim(), title = $('#nt').value.trim();
+  if (!text && !title) return toast('先写点内容再保存');
+  const now = new Date(), z = n => String(n).padStart(2, '0');
+  const stamp = `${now.getFullYear()}-${z(now.getMonth() + 1)}-${z(now.getDate())} ${z(now.getHours())}${z(now.getMinutes())}`;
+  const safe = (title || '随手记').replace(/[\\/:*?"<>|#^\[\]]/g, ' ').trim().slice(0, 60);
+  const path = `${CFG.inbox}/${stamp} ${safe}.md`;
+  const md = `---\ncreated: ${now.toISOString()}\ntags: [mobile-inbox]\n---\n\n${title ? '# ' + title + '\n\n' : ''}${text}\n`;
+  $('#save').disabled = true;
+  try {
+    const r = await g(`${vaultUrl(path)}:/content?@microsoft.graph.conflictBehavior=fail`,
+      { method: 'PUT', headers: { 'Content-Type': 'text/markdown' }, body: md });
+    const j = await r.json();
+    await dbPut({ path, mtime: j.lastModifiedDateTime || now.toISOString(), content: md });
+    await load();
+    $('#nt').value = ''; $('#nb').value = ''; $('#dlg').close(); toast('已保存到 Inbox');
+  } catch (e) {
+    toast(e.status === 409 ? '同名笔记已存在，请换个标题' : '保存失败，请检查网络后重试');
+  }
+  $('#save').disabled = false;
+};
+
+/* ---------- 启动 ---------- */
+async function main() {
+  await openDB();
+  if (CFG.clientId === 'YOUR_CLIENT_ID') {
+    $('#app').innerHTML = '<div class="login"><h1>还差一步</h1><p>请在文件顶部的 CFG 里填入 Azure 应用的 clientId。</p></div>'; return;
+  }
+  let r = null;
+  try { r = await pca.handleRedirectPromise(); } catch (e) { console.error(e); }
+  acct = (r && r.account) || pca.getAllAccounts()[0];
+  if (!acct) {
+    $('#app').innerHTML = `<div class="login"><h1>JZ-LifeOS</h1><p>登录 Microsoft 账号，读取 OneDrive 里的笔记</p>
+      <button class="btn" id="in" type="button">登录</button></div>`;
+    $('#in').onclick = () => pca.loginRedirect({ scopes: SCOPES }); return;
+  }
+  pca.setActiveAccount(acct);
+  shell();
+  await load();                                   // 先显示缓存
+  if (!notes.length) setStatus('首次同步中，请稍候…');
+  try { await sync(); }
+  catch (e) { setStatus(notes.length ? `共 ${notes.length} 篇 · 离线，显示的是缓存` : '同步失败：' + e.message); }
+}
+main();
+</script>
+</body>
+</html>
