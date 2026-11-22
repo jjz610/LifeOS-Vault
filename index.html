@@ -151,7 +151,7 @@ function drawEd(){$('#et').textContent=cur.title;$('#ep').textContent=cur.path;$
   else if(s.h===null){if(s.b)h+=sec('正文',i,s.b,0)}else h+=sec(t,i,s.b,lv)});
  const refs=[...new Set([...build(P).matchAll(/!\[\[([^\]|]+)(?:\|[^\]]*)?\]\]|!\[[^\]]*\]\(([^)\s]+)/g)].map(m=>m[2]||(IMG.test(m[1].trim())?m[1].trim():'')).filter(r=>r&&!/^data:/i.test(r)))].slice(0,12);
  b.innerHTML=(refs.length?`<div class="thumbs">${refs.map(r=>`<img data-att="${esc(r)}" alt="${esc(r)}">`).join('')}</div>`:'')+(h||'<div class="empty">这篇笔记是空的</div>');b.querySelectorAll('textarea').forEach(grow);hydrate(b,cur.path)}
-function openNote(p,foc,back){const n=notes.find(x=>x.path===p);if(!n)return;if($('#ed').open){if(!back&&cur&&cur.path!==p)NAV.push(cur.path)}else NAV=[];cur=n;P=parse(n.content);dirty=false;RO=n.cat===CFG.src;mode=RO?'view':(foc||n.cat===CFG.inbox)?'edit':'view';
+function openNote(p,foc,back){const n=notes.find(x=>x.path===p);if(!n)return;if($('#ed').open){if(!back&&cur&&cur.path!==p)NAV.push(cur.path)}else NAV=[];cur=n;P=parse(n.content);dirty=false;RO=n.cat===CFG.src;mode=foc&&!RO?'edit':'view';
  if(foc&&!RO&&P.secs.findIndex(x=>x.h&&/^#+\s+My observations\s*$/i.test(x.h))<0)P.secs.push({h:'## My observations',b:'',fx:null});
  setDirty(false);$('#tE').hidden=RO;$('#sv').hidden=RO;$('#bk').hidden=!NAV.length;drawEd();if(RO)$('#es').textContent='原始材料只读，不会被改动';if(!$('#ed').open)$('#ed').showModal();$('#eb').querySelectorAll('textarea').forEach(grow);$('#eb').scrollTop=0;
  if(foc){const i=P.secs.findIndex(x=>x.h&&/^#+\s+My observations\s*$/i.test(x.h)),t=i>=0&&$(`#eb textarea[data-k="${i}"]`);if(t){t.focus();t.scrollIntoView({block:'center'})}}}
@@ -240,7 +240,7 @@ function shell(){$('#app').innerHTML=`
  let tm;$('#q').oninput=()=>{clearTimeout(tm);tm=setTimeout(drawReview,200)};
  $('#cs').onclick=capture;$('#out').onclick=()=>pca.logoutRedirect({account:acct});
  $('#vc').onclick=e=>{const b=e.target.closest('button[data-v]');if(b){$('#q').value='';rvV=b.dataset.v;drawReview()}};
- $('#rv').onclick=e=>{const a=e.target.closest('a[data-p]');if(a){e.preventDefault();return openNote(a.dataset.p)}const w=e.target.closest('button[data-w]');if(w)return openNote(w.dataset.w,1);const o=e.target.closest('button[data-o]');if(o)openNote(o.dataset.o)};
+ $('#rv').onclick=e=>{const a=e.target.closest('a[data-p]');if(a){e.preventDefault();return openNote(a.dataset.p)}const w=e.target.closest('button[data-w]');if(w)return openNote(w.dataset.w,1);const o=e.target.closest('button[data-o]');if(o){openNote(o.dataset.o);mode='edit';drawEd();$('#eb').querySelectorAll('textarea').forEach(grow)}};
  $('#rv').onchange=e=>{const x=e.target.closest('select[data-p]');if(x)setSt(x.dataset.p,x.value)}}
 $('#x').onclick=closeEd;$('#ed').addEventListener('close',()=>{NAV=[]});
 $('#bk').onclick=()=>{if(dirty&&!confirm('有未保存的修改，确定放弃吗？'))return;const p=NAV.pop();if(p)openNote(p,0,1)};$('#ed').addEventListener('cancel',e=>{if(dirty){e.preventDefault();closeEd()}});$('#sv').onclick=saveNote;
