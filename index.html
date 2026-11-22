@@ -6,309 +6,244 @@
 <meta name="color-scheme" content="light dark">
 <title>JZ-LifeOS</title>
 <style>
-:root{--bg:#EEF2F0;--panel:#fff;--ink:#1B2522;--mute:#62706B;--line:#D5DDD9;--accent:#0F6E66;--accent-ink:#fff;--warn:#B4472B;
---sans:system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
---serif:"Noto Serif SC","Source Han Serif SC","Songti SC",Georgia,serif;
+:root{--bg:#EEF2F0;--panel:#fff;--ink:#1B2522;--mute:#62706B;--line:#D5DDD9;--accent:#0F6E66;--on:#fff;--warn:#B4472B;
+--sans:system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;--serif:"Noto Serif SC","Source Han Serif SC","Songti SC",Georgia,serif;
 box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media(prefers-color-scheme:dark){:root{--bg:#101615;--panel:#172120;--ink:#E3EBE8;--mute:#8FA19B;--line:#2A3835;--accent:#5CC4B8;--accent-ink:#0B1412;--warn:#E58A6E}}
+@media(prefers-color-scheme:dark){:root{--bg:#101615;--panel:#172120;--ink:#E3EBE8;--mute:#8FA19B;--line:#2A3835;--accent:#5CC4B8;--on:#0B1412;--warn:#E58A6E}}
 *,*::before,*::after{box-sizing:inherit}
 html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);-webkit-text-size-adjust:100%}
-button,input,textarea{font:inherit;color:inherit}
-button{cursor:pointer}
+button,input,textarea{font:inherit;color:inherit}button{cursor:pointer}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-.wrap{max-width:720px;margin:0 auto;padding:0 16px 48px}
-header{position:sticky;top:env(safe-area-inset-top,0px);background:var(--bg);padding:12px 0 8px;z-index:5}
-.bar{display:flex;gap:8px}
-.bar input{flex:1;min-width:0;padding:11px 14px;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
-.btn{border:0;border-radius:10px;padding:0 16px;background:var(--accent);color:var(--accent-ink);font-weight:600;min-height:44px}
-.btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--line);font-weight:500}
-.meta{display:flex;justify-content:space-between;align-items:center;color:var(--mute);font-size:13px;padding:8px 2px 0;min-height:30px}
-.meta button{background:none;border:0;color:var(--mute);text-decoration:underline;padding:4px}
+.wrap{max-width:900px;margin:0 auto;padding:12px 14px 48px}
+.top{display:flex;justify-content:space-between;align-items:baseline;color:var(--mute);font-size:13px}
+.top b{font-family:var(--serif);font-size:20px;color:var(--ink)}
+.top button{background:none;border:0;color:var(--mute);text-decoration:underline;padding:4px}
+.cap{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:8px}
+.cap h2{font-size:15px;margin:0 0 8px}
+input[type=text],input[type=search],textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--bg)}
+.cap textarea{min-height:76px;margin-top:8px;resize:vertical;line-height:1.6}
+.row{display:flex;gap:8px;justify-content:flex-end;align-items:center;margin-top:8px}
+.btn{border:0;border-radius:10px;padding:0 16px;background:var(--accent);color:var(--on);font-weight:600;min-height:42px}
+.btn.g{background:none;color:var(--accent);border:1px solid var(--line);font-weight:500}
+.btn:disabled{opacity:.5}
+.cols{display:grid;grid-template-columns:minmax(112px,170px) 1fr;gap:12px;margin-top:14px;align-items:start}
+.cats{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:6px 4px;position:sticky;top:8px}
+.cats h3{font-size:13px;color:var(--mute);margin:6px 10px;font-weight:500}
+.cats label{display:flex;gap:8px;align-items:center;padding:9px 10px;font-size:14px;min-height:40px}
+.cats label span{flex:1;min-width:0;overflow-wrap:anywhere}
+.cats i{font-style:normal;color:var(--mute);font-size:12px}
+.cats input{accent-color:var(--accent);width:18px;height:18px;flex:none}
 ul.list{list-style:none;margin:8px 0 0;padding:0;background:var(--panel);border-radius:12px;border:1px solid var(--line)}
-ul.list li{border-top:1px solid var(--line)}
-ul.list li:first-child{border-top:0}
-ul.list button{display:block;width:100%;text-align:left;background:none;border:0;padding:13px 16px}
-.t{font-size:16px;font-weight:600}
-.s{color:var(--mute);font-size:13px;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.s mark{background:none;color:var(--accent);font-weight:600}
-.empty{padding:28px 16px;text-align:center;color:var(--mute)}
-article{display:none}
-article.on{display:block}
-article h1.nt{font-family:var(--serif);font-size:28px;line-height:1.3;margin:18px 0 4px}
-.sub{color:var(--mute);font-size:13px;margin-bottom:18px}
-.md{font-family:var(--serif);font-size:17px;line-height:1.85;overflow-wrap:anywhere}
-.md h1,.md h2,.md h3{line-height:1.35;margin:1.6em 0 .5em}
-.md blockquote{margin:1em 0;padding:.1em 1em;border-left:3px solid var(--accent);color:var(--mute)}
-.md pre{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px;overflow-x:auto;font-size:14px;line-height:1.5}
-.md code{font-size:.9em;background:var(--panel);padding:.1em .35em;border-radius:4px}
-.md pre code{background:none;padding:0}
-.md table{border-collapse:collapse;display:block;overflow-x:auto}
-.md th,.md td{border:1px solid var(--line);padding:6px 10px}
-.md img{max-width:100%}
-.md a{color:var(--accent)}
-.md a.missing{color:var(--warn);text-decoration:line-through}
+ul.list li+li{border-top:1px solid var(--line)}
+ul.list button{display:block;width:100%;text-align:left;background:none;border:0;padding:12px 14px}
+.t{font-weight:600;overflow-wrap:anywhere}.s{color:var(--mute);font-size:12.5px;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.empty{padding:26px 14px;text-align:center;color:var(--mute)}
+dialog{width:min(780px,calc(100% - 16px));max-height:94vh;border:1px solid var(--line);border-radius:14px;background:var(--panel);color:var(--ink);padding:0;overflow:hidden}
+dialog[open]{display:flex;flex-direction:column}dialog::backdrop{background:rgba(0,0,0,.5)}
+.eh{padding:12px 14px;border-bottom:1px solid var(--line);display:flex;gap:10px;align-items:flex-start}
+.eh div{flex:1;min-width:0}.eh h2{margin:0;font-family:var(--serif);font-size:20px;overflow-wrap:anywhere}.eh p{margin:3px 0 0;color:var(--mute);font-size:12px;overflow-wrap:anywhere}
+.tabs{display:flex;gap:6px;padding:8px 14px 0}.tabs button{border:0;background:none;padding:6px 12px;border-radius:8px;color:var(--mute)}.tabs .on{background:var(--bg);color:var(--ink);font-weight:600}
+#eb{overflow:auto;padding:6px 14px 14px;flex:1}
+.sec{margin-top:12px}.lb{font-weight:700;margin-bottom:5px}
+.l0 .lb{color:var(--mute);font-weight:500;font-size:13px}.l1 .lb{font-size:20px}.l2 .lb{font-size:17px}.l3 .lb,.l4 .lb{font-size:15px}
+.lf{padding-left:8px;margin-top:8px}.lf .lb{font-size:14px}.lf textarea{min-height:40px}
+.l2{padding-left:8px}.l3{padding-left:16px}.l4,.l5,.l6{padding-left:24px}
+.sec textarea{line-height:1.65;resize:none;overflow:hidden;min-height:44px}
+.ef{padding:10px 14px;border-top:1px solid var(--line);display:flex;gap:8px;align-items:center;justify-content:space-between;color:var(--mute);font-size:13px}
+.md{font-family:var(--serif);font-size:17px;line-height:1.85;overflow-wrap:anywhere}.md a{color:var(--accent)}.md a.missing{color:var(--warn);text-decoration:line-through}
+.md pre{background:var(--bg);border-radius:8px;padding:12px;overflow-x:auto;font-size:14px}.md img{max-width:100%}.md table{display:block;overflow-x:auto;border-collapse:collapse}.md td,.md th{border:1px solid var(--line);padding:5px 9px}
 .embed{color:var(--mute);font-size:14px;border:1px dashed var(--line);border-radius:6px;padding:2px 8px}
-.back{margin:10px 0 0;border:0;background:none;color:var(--accent);padding:8px 0;font-weight:600}
-.bl{margin-top:36px;border-top:1px solid var(--line);padding-top:14px}
-.bl h2{font-size:15px;margin:0 0 8px}
-.bl button{display:block;background:none;border:0;color:var(--accent);padding:6px 0;text-align:left}
-.login{text-align:center;padding:90px 0}
-.login h1{font-family:var(--serif);font-size:30px;margin:0 0 8px}
-.login p{color:var(--mute);margin:0 0 24px}
-dialog{width:min(560px,calc(100% - 24px));border:1px solid var(--line);border-radius:14px;background:var(--panel);color:var(--ink);padding:16px}
-dialog::backdrop{background:rgba(0,0,0,.45)}
-dialog input,dialog textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:11px 12px;background:var(--bg);margin-bottom:10px}
-dialog textarea{min-height:220px;resize:vertical;line-height:1.6}
-.row{display:flex;gap:8px;justify-content:flex-end}
-.hint{color:var(--mute);font-size:13px;margin:0 0 10px}
-.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:999px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s}
+.login{text-align:center;padding:90px 0}.login h1{font-family:var(--serif);font-size:30px;margin:0 0 8px}.login p{color:var(--mute);margin:0 0 24px}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:999px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:99;max-width:90%}
 .toast.on{opacity:1}
+.pt{display:flex;gap:6px;margin-top:10px}.pt button{border:0;background:none;padding:8px 14px;border-radius:999px;color:var(--mute);font-weight:600}.pt .on{background:var(--accent);color:var(--on)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 4px}.chips button{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:6px 12px;font-size:13px;min-height:34px}.chips .on{border-color:var(--accent);color:var(--accent);font-weight:600}.chips i{font-style:normal;color:var(--mute);margin-left:3px}
+.rc{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-top:10px}
+.tp{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.tp a,.tp span{font-size:12px;border:1px solid var(--line);border-radius:999px;padding:2px 9px;color:var(--mute);text-decoration:none}
+.ln{margin-top:8px;font-size:13.5px;color:var(--mute)}.rc a{color:var(--accent)}.miss{opacity:.6}
+.ra{display:flex;gap:8px;margin-top:10px}.ra select{flex:1;min-width:0;border:1px solid var(--line);border-radius:10px;padding:8px;background:var(--bg);min-height:42px}
+.kb{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;margin-top:8px;align-items:start}.kc h3{font-size:14px;margin:10px 2px 0}.kc i{font-style:normal;color:var(--mute);font-weight:400}
+@media(max-width:520px){.cats label{font-size:13px;padding:8px 6px}.wrap{padding:10px}}
 @media(prefers-reduced-motion:reduce){.toast{transition:none}}
 </style>
 </head>
 <body>
 <div class="wrap" id="app"></div>
-
-<dialog id="dlg">
-  <p class="hint">会保存到 Inbox 文件夹，并自动加上 mobile-inbox 标签。</p>
-  <input id="nt" placeholder="标题（可不填）" autocomplete="off">
-  <textarea id="nb" placeholder="写点什么…"></textarea>
-  <div class="row">
-    <button class="btn ghost" id="cancel" type="button">取消</button>
-    <button class="btn" id="save" type="button">保存笔记</button>
-  </div>
+<dialog id="ed">
+  <div class="eh"><div><h2 id="et"></h2><p id="ep"></p></div><button class="btn g" id="x" type="button">关闭</button></div>
+  <div class="tabs"><button id="tE" type="button">编辑</button><button id="tV" type="button">预览</button></div>
+  <div id="eb"></div>
+  <div class="ef"><span id="es">没有改动</span><button class="btn" id="sv" type="button">保存修改</button></div>
 </dialog>
 <div class="toast" id="toast" role="status"></div>
-
 <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.38.3/lib/msal-browser.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
 <script>
-/* ===== 只需要改这里 ===== */
-const CFG = {
-  clientId: 'ee55d4ab-d97a-49ae-8eee-3256eb44ff96',   // Azure 应用注册里的“应用程序(客户端) ID”
-  vault: 'JZ-LifeOS',           // OneDrive 根目录下的 vault 文件夹名
-  inbox: 'Inbox'                // 手机新建笔记存放的子文件夹
-};
-/* ======================== */
+const CFG={clientId:'ee55d4ab-d97a-49ae-8eee-3256eb44ff96',vault:'JZ-LifeOS',inbox:'00 Inbox',tpl:'Inbox capture template'};
+const G='https://graph.microsoft.com/v1.0',SCOPES=['Files.ReadWrite'];
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const enc=p=>p.split('/').map(encodeURIComponent).join('/');
+const base=p=>p.split('/').pop().replace(/\.md$/i,'');
+const LS={get:k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}},set:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+const pca=new msal.PublicClientApplication({auth:{clientId:CFG.clientId,authority:'https://login.microsoftonline.com/common',redirectUri:location.origin+location.pathname},cache:{cacheLocation:'localStorage'}});
+let acct=null,notes=[],byTitle=new Map(),cats=[],sel=null,cur=null,P=null,dirty=false,mode='edit';
 
-const G = 'https://graph.microsoft.com/v1.0';
-const SCOPES = ['Files.ReadWrite'];
-const $ = s => document.querySelector(s);
-const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const enc = p => p.split('/').map(encodeURIComponent).join('/');
-const base = p => p.split('/').pop().replace(/\.md$/i, '');
+/* 本地缓存 */
+let db=null;const mem=new Map();
+const openDB=()=>new Promise(res=>{try{const r=indexedDB.open('vault-reader',1);r.onupgradeneeded=()=>r.result.createObjectStore('notes',{keyPath:'path'});r.onsuccess=()=>{db=r.result;res()};r.onerror=()=>res()}catch(e){res()}});
+const tx=(m,fn)=>new Promise(res=>{const t=db.transaction('notes',m),rq=fn(t.objectStore('notes'));t.oncomplete=()=>res(rq&&rq.result);t.onerror=()=>res()});
+const dbAll=async()=>db?(await tx('readonly',s=>s.getAll()))||[]:[...mem.values()];
+const dbPut=n=>db?tx('readwrite',s=>s.put(n)):mem.set(n.path,n);
+const dbDel=p=>db?tx('readwrite',s=>s.delete(p)):mem.delete(p);
 
-const pca = new msal.PublicClientApplication({
-  auth: { clientId: CFG.clientId, authority: 'https://login.microsoftonline.com/common',
-          redirectUri: location.origin + location.pathname },
-  cache: { cacheLocation: 'localStorage' }
-});
-let acct = null, notes = [], byTitle = new Map(), back = new Map(), cur = null;
+/* 登录与 Graph */
+async function token(){try{return(await pca.acquireTokenSilent({scopes:SCOPES,account:acct})).accessToken}catch(e){await pca.acquireTokenRedirect({scopes:SCOPES});throw e}}
+async function g(u,o={}){const r=await fetch(u.startsWith('http')?u:G+u,{...o,headers:{Authorization:'Bearer '+await token(),...(o.headers||{})}});if(!r.ok){const e=new Error('HTTP '+r.status);e.status=r.status;throw e}return r}
+const vurl=p=>`/me/drive/root:/${enc(CFG.vault+(p?'/'+p:''))}`;
+async function listAll(){const out=[],st=[''];while(st.length){const p=st.pop();let u=`${vurl(p)}:/children?$select=id,name,folder,eTag,lastModifiedDateTime&$top=200`;
+ while(u){const j=await(await g(u)).json();for(const it of j.value){if(it.name.startsWith('.'))continue;const rp=p?p+'/'+it.name:it.name;
+ if(it.folder)st.push(rp);else if(/\.md$/i.test(it.name))out.push({path:rp,mtime:it.lastModifiedDateTime,etag:it.eTag})}u=j['@odata.nextLink']}}return out}
+async function sync(){setStatus('正在检查更新…');const remote=await listAll();const have=new Map((await dbAll()).map(n=>[n.path,n]));const live=new Set(remote.map(r=>r.path));
+ for(const p of have.keys())if(!live.has(p))await dbDel(p);
+ const todo=remote.filter(r=>!have.has(r.path)||have.get(r.path).mtime!==r.mtime||!have.get(r.path).etag);let done=0;
+ await Promise.all(Array.from({length:6},async()=>{while(todo.length){const r=todo.shift();const content=await(await g(`${vurl(r.path)}:/content`)).text();await dbPut({...r,content});setStatus(`正在同步 ${++done} 篇…`)}}));
+ await load();setStatus(`共 ${notes.length} 篇 · 刚刚同步`)}
 
-/* ---------- 本地缓存 (IndexedDB，失败时退回内存) ---------- */
-let db = null; const mem = new Map();
-function openDB() {
-  return new Promise(res => {
-    try {
-      const r = indexedDB.open('vault-reader', 1);
-      r.onupgradeneeded = () => r.result.createObjectStore('notes', { keyPath: 'path' });
-      r.onsuccess = () => { db = r.result; res(); };
-      r.onerror = () => res();
-    } catch (e) { res(); }
-  });
-}
-const tx = (m, fn) => new Promise(res => {
-  if (!db) return res(fn(null));
-  const t = db.transaction('notes', m), s = t.objectStore('notes'); const rq = fn(s);
-  t.oncomplete = () => res(rq && rq.result); t.onerror = () => res();
-});
-const dbAll = async () => db ? (await tx('readonly', s => s.getAll())) || [] : [...mem.values()];
-const dbPut = n => db ? tx('readwrite', s => s.put(n)) : mem.set(n.path, n);
-const dbDel = p => db ? tx('readwrite', s => s.delete(p)) : mem.delete(p);
+/* 索引与列表 */
+async function load(){notes=(await dbAll()).sort((a,b)=>b.mtime.localeCompare(a.mtime));byTitle=new Map();
+ for(const n of notes){n.title=base(n.path);n.cat=n.path.includes('/')?n.path.split('/')[0]:'根目录';n.lc=(n.title+'\n'+n.content).toLowerCase();n.fm=fmap(n.content);byTitle.set(n.title.toLowerCase(),n)}
+ cats=[...new Set(notes.map(n=>n.cat))].sort();
+ if(!sel){sel=new Set(LS.get('sel')||cats.filter(c=>/inbox|notes/i.test(c)));if(!sel.size)sel=new Set(cats)}
+ drawCats();drawList();drawReview()}
+function drawCats(){$('#cats').innerHTML='<h3>分类</h3>'+cats.map(c=>`<label><input type="checkbox" value="${esc(c)}" ${sel.has(c)?'checked':''}><span>${esc(c)}</span><i>${notes.filter(n=>n.cat===c).length}</i></label>`).join('')}
+function drawList(){const q=($('#q').value||'').trim().toLowerCase();let r=notes.filter(n=>sel.has(n.cat)&&(!q||n.lc.includes(q))).slice(0,150);
+ $('#list').innerHTML=r.length?r.map(n=>{let s=n.path.slice(0,n.path.lastIndexOf('/')+1||0)||'根目录';s=s.replace(/\/$/,'');
+  if(q){const i=n.content.toLowerCase().indexOf(q);if(i>=0&&!n.title.toLowerCase().includes(q))s=n.content.slice(Math.max(0,i-15),i+50).replace(/\s+/g,' ')}
+  return`<li><button type="button" data-p="${esc(n.path)}"><div class="t">${esc(n.title)}</div><div class="s">${esc(s)} · ${new Date(n.mtime).toLocaleDateString('zh-CN')}</div></button></li>`}).join(''):`<li class="empty">${sel.size?'没有匹配的笔记':'在左侧勾选要显示的分类'}</li>`}
+const setStatus=t=>{const e=$('#st');if(e)e.textContent=t};
+const toast=t=>{const e=$('#toast');e.textContent=t;e.classList.add('on');setTimeout(()=>e.classList.remove('on'),2400)};
 
-/* ---------- 登录与 Graph ---------- */
-async function token() {
-  try { return (await pca.acquireTokenSilent({ scopes: SCOPES, account: acct })).accessToken; }
-  catch (e) { await pca.acquireTokenRedirect({ scopes: SCOPES }); throw e; }
-}
-async function g(u, opt = {}) {
-  const r = await fetch(u.startsWith('http') ? u : G + u,
-    { ...opt, headers: { Authorization: 'Bearer ' + await token(), ...(opt.headers || {}) } });
-  if (!r.ok) { const e = new Error('HTTP ' + r.status); e.status = r.status; throw e; }
-  return r;
-}
-const vaultUrl = p => `/me/drive/root:/${enc(CFG.vault + (p ? '/' + p : ''))}`;
+/* 按标题拆分 / 合并 */
+const LBL=/^([A-Za-z][A-Za-z ]*(?: \/ [A-Za-z ]+)?|[\u4e00-\u9fa5][\u4e00-\u9fa5 ]{0,10})([:：])[ \t]*(.*)$/;
+function splitFields(b){const pre=[],f=[];let c=null,n=0;
+ for(const l of b.split('\n')){const m=l.match(LBL);if(m&&!m[3].startsWith('//')){n++;c={l:m[1],s:m[2],v:[m[3]]};f.push(c)}else if(c)c.v.push(l);else pre.push(l)}
+ return n<3?null:{pre:pre.join('\n').trim(),f:f.map(x=>({l:x.l,s:x.s,v:x.v.join('\n').trim()}))}}
+function buildF(x){const it=[];if(x.pre.trim())it.push({t:x.pre.trim(),m:1});
+ for(const f of x.f){const v=f.v.trim(),m=v.includes('\n');it.push({t:f.l+f.s+(v?(m?'\n':' ')+v:''),m})}
+ return it.map((c,i)=>(i?(c.m||it[i-1].m?'\n\n':'\n'):'')+c.t).join('')}
+function parse(m){let fm='';const f=m.match(/^---\r?\n[\s\S]*?\r?\n---[ \t]*(\r?\n|$)/);if(f){fm=f[0].replace(/\s+$/,'');m=m.slice(f[0].length)}
+ const s=[{h:null,b:[]}];let fence=false;
+ for(const l of m.split(/\r?\n/)){if(/^\s*(```|~~~)/.test(l))fence=!fence;if(!fence&&/^#{1,6}\s+\S/.test(l))s.push({h:l,b:[]});else s[s.length-1].b.push(l)}
+ return{fm,secs:s.map(x=>{const b=x.b.join('\n').trim();return{h:x.h,b,fx:splitFields(b)}})}}
+function build(p){const o=[];if(p.fm.trim())o.push(p.fm.trim());
+ for(const s of p.secs){const b=s.fx?buildF(s.fx):s.b.trim();if(s.h===null){if(b)o.push(b)}else o.push(s.h+(b?'\n\n'+b:''))}return o.join('\n\n')+'\n'}
+function md(t){let b=t.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/,'');
+ b=b.replace(/!\[\[([^\]]+)\]\]/g,(m,a)=>/\.base(#|$)/i.test(a)?`<a href="#" data-v="${esc(a.split('#')[1]||'')}">打开回看视图：${esc(a.split('#')[1]||a)}</a>`:`<span class="embed">附件：${esc(a)}</span>`);
+ b=b.replace(/\[\[([^\]|#]+)(?:#[^\]|]*)?(?:\|([^\]]+))?\]\]/g,(m,x,al)=>{x=x.trim();return`<a href="#" data-w="${esc(x)}"${byTitle.has(x.toLowerCase())?'':' class="missing"'}>${esc((al||x).trim())}</a>`});
+ return marked.parse(b,{breaks:true}).replace(/<script[\s\S]*?<\/script>/gi,'')}
 
-async function listAll() {
-  const out = [], stack = [''];
-  while (stack.length) {
-    const p = stack.pop();
-    let url = `${vaultUrl(p)}:/children?$select=id,name,folder,lastModifiedDateTime&$top=200`;
-    while (url) {
-      const j = await (await g(url)).json();
-      for (const it of j.value) {
-        if (it.name.startsWith('.')) continue;           // 跳过 .obsidian 等隐藏目录
-        const rp = p ? p + '/' + it.name : it.name;
-        if (it.folder) stack.push(rp);
-        else if (/\.md$/i.test(it.name)) out.push({ path: rp, mtime: it.lastModifiedDateTime });
-      }
-      url = j['@odata.nextLink'];
-    }
-  }
-  return out;
-}
+/* 弹窗编辑器 */
+const grow=t=>{t.style.height='auto';t.style.height=t.scrollHeight+4+'px'};
+const sec=(label,k,v,lv)=>`<div class="sec l${lv}"><div class="lb">${esc(label)}</div><textarea data-k="${k}">${esc(v)}</textarea></div>`;
+function drawEd(){$('#et').textContent=cur.title;$('#ep').textContent=cur.path;$('#tE').className=mode==='edit'?'on':'';$('#tV').className=mode==='view'?'on':'';
+ const b=$('#eb');if(mode==='view'){b.innerHTML=`<div class="md">${md(build(P))}</div>`;return}
+ let h='';if(P.fm.trim())h+=sec('属性','fm',P.fm,0);
+ P.secs.forEach((s,i)=>{const lv=s.h?s.h.match(/^#+/)[0].length:0,t=s.h?s.h.replace(/^#+\s+/,''):'正文';
+  if(s.fx){if(s.h)h+=`<div class="sec l${lv}"><div class="lb">${esc(t)}</div></div>`;if(s.fx.pre)h+=sec('说明',i+':pre',s.fx.pre,'f');s.fx.f.forEach((f,j)=>{h+=sec(f.l,i+':'+j,f.v,'f')})}
+  else if(s.h===null){if(s.b)h+=sec('正文',i,s.b,0)}else h+=sec(t,i,s.b,lv)});
+ b.innerHTML=h||'<div class="empty">这篇笔记是空的</div>';b.querySelectorAll('textarea').forEach(grow)}
+function openNote(p,foc){const n=notes.find(x=>x.path===p);if(!n)return;cur=n;P=parse(n.content);dirty=false;mode='edit';setDirty(false);drawEd();if(!$('#ed').open)$('#ed').showModal();$('#eb').querySelectorAll('textarea').forEach(grow);$('#eb').scrollTop=0;
+ if(foc){const i=P.secs.findIndex(x=>x.h&&/^#+\s+My observations\s*$/i.test(x.h)),t=i>=0&&$(`#eb textarea[data-k="${i}"]`);if(t){t.focus();t.scrollIntoView({block:'center'})}}}
+function setDirty(d){dirty=d;$('#es').textContent=d?'有未保存的修改':'没有改动'}
+function closeEd(){if(dirty&&!confirm('有未保存的修改，确定放弃吗？'))return;$('#ed').close()}
+async function saveNote(){const out=build(P);$('#sv').disabled=true;
+ try{const h={'Content-Type':'text/markdown'};if(cur.etag)h['If-Match']=cur.etag;
+  const j=await(await g(`${vurl(cur.path)}:/content`,{method:'PUT',headers:h,body:out})).json();
+  await dbPut({path:cur.path,mtime:j.lastModifiedDateTime,etag:j.eTag,content:out});await load();cur=notes.find(n=>n.path===cur.path);P=parse(out);setDirty(false);toast('已保存')}
+ catch(e){if(e.status===412){toast('这篇笔记刚在别处被改过，已刷新，请关闭后重新打开再改');sync().catch(()=>{})}else toast('保存失败，请检查网络后重试')}
+ $('#sv').disabled=false}
 
-async function sync() {
-  setStatus('正在检查更新…');
-  const remote = await listAll();
-  const have = new Map((await dbAll()).map(n => [n.path, n]));
-  const live = new Set(remote.map(r => r.path));
-  for (const p of have.keys()) if (!live.has(p)) await dbDel(p);
-  const todo = remote.filter(r => !have.has(r.path) || have.get(r.path).mtime !== r.mtime);
-  let done = 0;
-  await Promise.all(Array.from({ length: 6 }, async () => {
-    while (todo.length) {
-      const r = todo.shift();
-      const content = await (await g(`${vaultUrl(r.path)}:/content`)).text();
-      await dbPut({ path: r.path, mtime: r.mtime, content });
-      setStatus(`正在同步 ${++done} 篇…`);
-    }
-  }));
-  await load();
-  setStatus(`共 ${notes.length} 篇 · 刚刚同步`);
-}
+/* Quick Capture（写入 00 Inbox，不覆盖已有文件） */
+async function capture(){const title=$('#ct').value.trim(),text=$('#cb').value.trim();if(!title&&!text)return toast('先写点内容再保存');
+ const now=new Date(),z=n=>String(n).padStart(2,'0'),d=`${now.getFullYear()}-${z(now.getMonth()+1)}-${z(now.getDate())}`,hm=`${z(now.getHours())}${z(now.getMinutes())}`;
+ const safe=(title||'随手记').replace(/[\\/:*?"<>|#^\[\]]/g,' ').trim().slice(0,60),path=`${CFG.inbox}/${d} ${hm} ${safe}.md`;
+ const tp=byTitle.get(CFG.tpl.toLowerCase());let m;
+ if(tp){const url=/^https?:\/\/\S+$/.test(text);let put=!text;
+  m=tp.content.replace(/^(#{1,6})[ \t]+.*$/m,(a,h)=>h+' '+(title||safe));
+  m=m.replace(/^(Captured at:)[ \t]*.*$/m,(a,l)=>`${l} ${d} ${hm.slice(0,2)}:${hm.slice(2)}`);
+  if(url)m=m.replace(/^(Source link:)[ \t]*.*$/m,(a,l)=>{put=true;return`${l} ${text}`});
+  else if(text)m=m.replace(/^(Supplied content \/ attachments:)[^\n]*(\n<!--[\s\S]*?-->)?/m,(a,l)=>{put=true;return`${l}\n${text}`});
+  if(!put)m=m.trimEnd()+'\n\n'+text;m=m.trimEnd()+'\n'}
+ else m=`---\ncreated: ${now.toISOString()}\n---\n\n${title?'# '+title+'\n\n':''}${text}\n`;
+ $('#cs').disabled=true;
+ try{const j=await(await g(`${vurl(path)}:/content?@microsoft.graph.conflictBehavior=fail`,{method:'PUT',headers:{'Content-Type':'text/markdown'},body:m})).json();
+  await dbPut({path,mtime:j.lastModifiedDateTime||now.toISOString(),etag:j.eTag,content:m});await load();$('#ct').value='';$('#cb').value='';toast('已存入 Inbox')}
+ catch(e){toast(e.status===409?'同名笔记已存在，请换个标题':'保存失败，请检查网络后重试')}
+ $('#cs').disabled=false}
 
-/* ---------- 索引 ---------- */
-async function load() {
-  notes = (await dbAll()).sort((a, b) => b.mtime.localeCompare(a.mtime));
-  byTitle = new Map(); back = new Map();
-  for (const n of notes) { n.title = base(n.path); byTitle.set(n.title.toLowerCase(), n); n.lc = (n.title + '\n' + n.content).toLowerCase(); }
-  for (const n of notes) for (const m of n.content.matchAll(/(?<!!)\[\[([^\]|#]+)/g)) {
-    const t = byTitle.get(m[1].trim().toLowerCase());
-    if (t && t !== n) { if (!back.has(t.path)) back.set(t.path, new Set()); back.get(t.path).add(n); }
-  }
-  renderList($('#q') ? $('#q').value : '');
-}
+/* 回看清单（对应 Base：04 Output/回看设计预览） */
+const RV='04 Output/回看设计预览',STS=['待我回看','已写想法','看过，暂不写'],TOP=['数据整理','个人知识管理','AI'],VW=['待我回看','我写过的','全部收录','看板','检查状态',...TOP];
+let rvV='待我回看';
+const unq=v=>v.replace(/^(["'])(.*)\1$/,'$2');
+function fmap(c){const m=c.match(/^---\r?\n([\s\S]*?)\r?\n---/),o={};if(!m)return o;let k=null,a;
+ for(const l of m[1].split(/\r?\n/)){if(a=l.match(/^([\w\u4e00-\u9fa5-]+):[ \t]*(.*)$/)){k=a[1];o[k]=a[2].trim()?[unq(a[2].trim())]:[]}else if(k&&(a=l.match(/^\s*-\s+(.*)$/)))o[k].push(unq(a[1].trim()))}return o}
+const stOk=n=>{const s=n.fm.review_status||[];return s.length===1&&STS.includes(s[0])};
+const needChk=n=>(n.fm.review_status||[]).length>0&&!stOk(n);
+const linked=(n,t)=>new RegExp('\\[\\[\\s*(?:[^\\]|#]*/)?'+t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\s*[|\\]#]').test(n.content);
+function inV(n,v){const s=n.fm.review_status||[];
+ if(v==='待我回看')return !s.length||(stOk(n)&&s[0]==='待我回看');
+ if(v==='我写过的')return stOk(n)&&s[0]==='已写想法';
+ if(v==='检查状态')return needChk(n);
+ return TOP.includes(v)?linked(n,v):true}
+function lk(v,lab){const m=String(v).match(/\[\[([^\]|#]+)(?:#[^\]|]*)?(?:\|([^\]]+))?\]\]/);if(!m)return esc(v);const x=m[1].trim().split('/').pop(),t=byTitle.get(x.toLowerCase()),s=esc(lab||(m[2]||x).trim());return t?`<a href="#" data-p="${esc(t.path)}">${s}</a>`:`<span class="miss">${s}</span>`}
+function card(n){const f=n.fm,s=f.review_status||[],cur=stOk(n)?s[0]:'',h=(n.content.match(/^#\s+(.+)$/m)||[])[1]||n.title;
+ const L=[['知识笔记',f.knowledge_note],['原始材料',f.source_note],['逐字稿',f.transcript]].filter(x=>x[1]&&x[1][0]).map(x=>lk(x[1][0],x[0])).join(' · ');
+ const ph=cur?'':`<option value="" selected disabled>${s.length?'需检查：'+esc(s.join('、')):'（未设置）'}</option>`;
+ return`<div class="rc"><div class="t">${esc(h)}</div><div class="tp">${(f.topics||[]).map(x=>lk(x)).join('')}</div><div class="ln">${L}</div>
+ <div class="ra"><select data-p="${esc(n.path)}" aria-label="回看状态">${ph}${STS.map(x=>`<option${x===cur?' selected':''}>${x}</option>`).join('')}</select><button class="btn" data-w="${esc(n.path)}" type="button">写想法</button></div></div>`}
+function drawReview(){const el=$('#rv');if(!el)return;const all=notes.filter(n=>n.path.startsWith(RV+'/')&&(n.fm.type||[])[0]==='review-preview');
+ $('#vc').innerHTML=VW.map(v=>`<button type="button" data-v="${esc(v)}" class="${v===rvV?'on':''}">${esc(v)}<i>${v==='看板'||v==='全部收录'?all.length:all.filter(n=>inV(n,v)).length}</i></button>`).join('');
+ if(!all.length){el.innerHTML=`<div class="empty">没有在 ${RV} 里找到 type: review-preview 的笔记</div>`;return}
+ if(rvV==='看板'){el.innerHTML='<div class="kb">'+[...STS,'需检查'].map(c=>{const r=all.filter(n=>c==='需检查'?needChk(n):stOk(n)?n.fm.review_status[0]===c:c==='待我回看'&&!(n.fm.review_status||[]).length);
+  return r.length||c!=='需检查'?`<div class="kc"><h3>${esc(c)} <i>${r.length}</i></h3>${r.map(card).join('')||'<div class="empty">空</div>'}</div>`:''}).join('')+'</div>';return}
+ const r=all.filter(n=>inV(n,rvV));el.innerHTML=r.length?r.map(card).join(''):'<div class="empty">这个视图里暂时没有笔记</div>'}
+function setPage(p){$('#pg1').hidden=p!==1;$('#pg2').hidden=p!==2;document.querySelectorAll('.pt button').forEach(b=>b.classList.toggle('on',+b.dataset.pg===p))}
+function gotoView(v){v=v==='回看状态看板'?'看板':v;rvV=VW.includes(v)?v:'全部收录';drawReview()}
+function withStatus(c,val){const m=c.match(/^---\r?\n([\s\S]*?)\r?\n---/);if(!m)return null;const nl=c.includes('\r\n')?'\r\n':'\n',y=m[1].split(/\r?\n/),i=y.findIndex(l=>/^review_status:/.test(l));let j=i+1;
+ if(i>=0)while(j<y.length&&/^\s*-\s/.test(y[j]))j++;
+ y.splice(i<0?y.length:i,i<0?0:j-i,'review_status:','  - '+val);return'---'+nl+y.join(nl)+nl+'---'+c.slice(m[0].length)}
+async function setSt(p,val){const n=notes.find(x=>x.path===p),out=n&&withStatus(n.content,val);if(!out)return toast('这张卡没有属性区，无法改状态');
+ try{const h={'Content-Type':'text/markdown'};if(n.etag)h['If-Match']=n.etag;const j=await(await g(`${vurl(p)}:/content`,{method:'PUT',headers:h,body:out})).json();
+  await dbPut({path:p,mtime:j.lastModifiedDateTime,etag:j.eTag,content:out});await load();toast('已改为：'+val)}
+ catch(e){toast(e.status===412?'这张卡刚在别处被改过，已刷新，请再试一次':'保存失败，请检查网络后重试');if(e.status===412)sync().catch(()=>{});drawReview()}}
 
-/* ---------- 界面 ---------- */
-function shell() {
-  $('#app').innerHTML = `
-  <div id="home">
-    <header>
-      <div class="bar">
-        <input id="q" type="search" placeholder="搜索标题和正文" autocomplete="off">
-        <button class="btn" id="new" type="button">新建</button>
-      </div>
-      <div class="meta"><span id="st"></span><button id="out" type="button">退出登录</button></div>
-    </header>
-    <ul class="list" id="list"></ul>
-  </div>
-  <article id="view"></article>`;
-  let tm; $('#q').oninput = e => { clearTimeout(tm); tm = setTimeout(() => renderList(e.target.value), 150); };
-  $('#new').onclick = () => $('#dlg').showModal();
-  $('#out').onclick = () => pca.logoutRedirect({ account: acct });
-  $('#list').onclick = e => { const b = e.target.closest('button[data-p]'); if (b) openNote(b.dataset.p); };
-}
-const setStatus = t => { const e = $('#st'); if (e) e.textContent = t; };
+function shell(){$('#app').innerHTML=`
+ <div class="top"><b>JZ-LifeOS</b><span><span id="st"></span> <button id="out" type="button">退出</button></span></div>
+ <nav class="pt"><button class="on" data-pg="1" type="button">笔记</button><button data-pg="2" type="button">回看</button></nav>
+ <div id="pg1"><section class="cap"><h2>Quick Capture</h2><input type="text" id="ct" placeholder="标题（可不填）" autocomplete="off"><textarea id="cb" placeholder="想到什么，先记下来…"></textarea>
+  <div class="row"><button class="btn" id="cs" type="button">存入 Inbox</button></div></section>
+ <div class="cols"><aside class="cats" id="cats"></aside><main><input type="search" id="q" placeholder="搜索标题和正文" autocomplete="off"><ul class="list" id="list"></ul></main></div></div>
+ <div id="pg2" hidden><div class="chips" id="vc"></div><div id="rv"></div></div>`;
+ let tm;$('#q').oninput=()=>{clearTimeout(tm);tm=setTimeout(drawList,150)};
+ $('#cs').onclick=capture;$('#out').onclick=()=>pca.logoutRedirect({account:acct});
+ $('#cats').onchange=e=>{const c=e.target.value;e.target.checked?sel.add(c):sel.delete(c);LS.set('sel',[...sel]);drawList()};
+ $('#list').onclick=e=>{const b=e.target.closest('button[data-p]');if(b)openNote(b.dataset.p)};
+ $('.pt').onclick=e=>{const b=e.target.closest('button[data-pg]');if(b)setPage(+b.dataset.pg)};
+ $('#vc').onclick=e=>{const b=e.target.closest('button[data-v]');if(b){rvV=b.dataset.v;drawReview()}};
+ $('#rv').onclick=e=>{const a=e.target.closest('a[data-p]');if(a){e.preventDefault();return openNote(a.dataset.p)}const w=e.target.closest('button[data-w]');if(w)openNote(w.dataset.w,1)};
+ $('#rv').onchange=e=>{const x=e.target.closest('select[data-p]');if(x)setSt(x.dataset.p,x.value)}}
+$('#x').onclick=closeEd;$('#ed').addEventListener('cancel',e=>{if(dirty){e.preventDefault();closeEd()}});$('#sv').onclick=saveNote;
+$('#tE').onclick=()=>{mode='edit';drawEd()};$('#tV').onclick=()=>{mode='view';drawEd()};
+$('#eb').addEventListener('input',e=>{const t=e.target;if(!t.dataset.k)return;const k=t.dataset.k;if(k==='fm')P.fm=t.value;else{const[i,j]=k.split(':');if(j===undefined)P.secs[+i].b=t.value;else if(j==='pre')P.secs[+i].fx.pre=t.value;else P.secs[+i].fx.f[+j].v=t.value}grow(t);if(!dirty)setDirty(true)});
+$('#eb').addEventListener('click',e=>{const v=e.target.closest('a[data-v]');if(v){e.preventDefault();if(dirty&&!confirm('有未保存的修改，确定放弃吗？'))return;$('#ed').close();setPage(2);gotoView(v.dataset.v);return}const a=e.target.closest('a[data-w]');if(!a)return;e.preventDefault();const t=byTitle.get(a.dataset.w.toLowerCase());
+ if(!t)return toast('这篇笔记还不存在');if(dirty&&!confirm('有未保存的修改，确定放弃吗？'))return;openNote(t.path)});
 
-function renderList(q) {
-  q = (q || '').trim().toLowerCase();
-  let rows = notes;
-  if (q) rows = notes.filter(n => n.lc.includes(q)).sort((a, b) =>
-    (b.title.toLowerCase().includes(q)) - (a.title.toLowerCase().includes(q)));
-  rows = rows.slice(0, 120);
-  $('#list').innerHTML = rows.length ? rows.map(n => {
-    const dir = n.path.includes('/') ? n.path.slice(0, n.path.lastIndexOf('/')) : '根目录';
-    let snip = dir;
-    if (q) {
-      const i = n.content.toLowerCase().indexOf(q);
-      if (i >= 0) {
-        const a = Math.max(0, i - 18), s = n.content.slice(a, i + q.length + 40).replace(/\s+/g, ' ');
-        snip = esc(s).replace(new RegExp(esc(q).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'ig'), m => `<mark>${m}</mark>`);
-        return row(n, snip);
-      }
-    }
-    return row(n, esc(snip));
-  }).join('') : `<li class="empty">${q ? '没有找到匹配的笔记' : '还没有笔记，等待同步完成'}</li>`;
-}
-const row = (n, s) => `<li><button type="button" data-p="${esc(n.path)}"><div class="t">${esc(n.title)}</div><div class="s">${s}</div></button></li>`;
-
-function openNote(p) {
-  const n = notes.find(x => x.path === p); if (!n) return;
-  cur = n;
-  let body = n.content.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/, '');
-  body = body.replace(/!\[\[([^\]]+)\]\]/g, (m, a) => `<span class="embed">附件：${esc(a)}</span>`);
-  body = body.replace(/\[\[([^\]|#]+)(?:#[^\]|]*)?(?:\|([^\]]+))?\]\]/g,
-    (m, t, al) => `<a href="#" data-w="${esc(t.trim())}">${esc((al || t).trim())}</a>`);
-  const html = marked.parse(body, { breaks: true }).replace(/<script[\s\S]*?<\/script>/gi, '');
-  const bl = [...(back.get(n.path) || [])];
-  const d = new Date(n.mtime).toLocaleString('zh-CN', { hour12: false });
-  $('#view').innerHTML = `
-    <button class="back" id="bk" type="button">‹ 返回列表</button>
-    <h1 class="nt">${esc(n.title)}</h1>
-    <div class="sub">${esc(n.path)} · 修改于 ${d}</div>
-    <div class="md">${html}</div>
-    ${bl.length ? `<div class="bl"><h2>被这些笔记链接（${bl.length}）</h2>${bl.map(b => `<button type="button" data-p="${esc(b.path)}">${esc(b.title)}</button>`).join('')}</div>` : ''}`;
-  $('#home').style.display = 'none'; $('#view').classList.add('on'); scrollTo(0, 0);
-  $('#bk').onclick = closeNote;
-  $('#view').querySelectorAll('.md a[data-w]').forEach(a => {
-    if (!byTitle.has(a.dataset.w.toLowerCase())) a.classList.add('missing');
-  });
-  $('#view').onclick = e => {
-    const w = e.target.closest('a[data-w]'), b = e.target.closest('button[data-p]');
-    if (w) { e.preventDefault(); const t = byTitle.get(w.dataset.w.toLowerCase()); t ? openNote(t.path) : toast('这篇笔记还不存在'); }
-    else if (b) openNote(b.dataset.p);
-  };
-}
-function closeNote() { $('#view').classList.remove('on'); $('#home').style.display = ''; }
-
-function toast(t) { const e = $('#toast'); e.textContent = t; e.classList.add('on'); setTimeout(() => e.classList.remove('on'), 2200); }
-
-/* ---------- 新建笔记（只写入 Inbox，不覆盖已有文件） ---------- */
-$('#cancel').onclick = () => $('#dlg').close();
-$('#save').onclick = async () => {
-  const text = $('#nb').value.trim(), title = $('#nt').value.trim();
-  if (!text && !title) return toast('先写点内容再保存');
-  const now = new Date(), z = n => String(n).padStart(2, '0');
-  const stamp = `${now.getFullYear()}-${z(now.getMonth() + 1)}-${z(now.getDate())} ${z(now.getHours())}${z(now.getMinutes())}`;
-  const safe = (title || '随手记').replace(/[\\/:*?"<>|#^\[\]]/g, ' ').trim().slice(0, 60);
-  const path = `${CFG.inbox}/${stamp} ${safe}.md`;
-  const md = `---\ncreated: ${now.toISOString()}\ntags: [mobile-inbox]\n---\n\n${title ? '# ' + title + '\n\n' : ''}${text}\n`;
-  $('#save').disabled = true;
-  try {
-    const r = await g(`${vaultUrl(path)}:/content?@microsoft.graph.conflictBehavior=fail`,
-      { method: 'PUT', headers: { 'Content-Type': 'text/markdown' }, body: md });
-    const j = await r.json();
-    await dbPut({ path, mtime: j.lastModifiedDateTime || now.toISOString(), content: md });
-    await load();
-    $('#nt').value = ''; $('#nb').value = ''; $('#dlg').close(); toast('已保存到 Inbox');
-  } catch (e) {
-    toast(e.status === 409 ? '同名笔记已存在，请换个标题' : '保存失败，请检查网络后重试');
-  }
-  $('#save').disabled = false;
-};
-
-/* ---------- 启动 ---------- */
-async function main() {
-  await openDB();
-  if (CFG.clientId === 'YOUR_CLIENT_ID') {
-    $('#app').innerHTML = '<div class="login"><h1>还差一步</h1><p>请在文件顶部的 CFG 里填入 Azure 应用的 clientId。</p></div>'; return;
-  }
-  let r = null;
-  try { r = await pca.handleRedirectPromise(); } catch (e) { console.error(e); }
-  acct = (r && r.account) || pca.getAllAccounts()[0];
-  if (!acct) {
-    $('#app').innerHTML = `<div class="login"><h1>JZ-LifeOS</h1><p>登录 Microsoft 账号，读取 OneDrive 里的笔记</p>
-      <button class="btn" id="in" type="button">登录</button></div>`;
-    $('#in').onclick = () => pca.loginRedirect({ scopes: SCOPES }); return;
-  }
-  pca.setActiveAccount(acct);
-  shell();
-  await load();                                   // 先显示缓存
-  if (!notes.length) setStatus('首次同步中，请稍候…');
-  try { await sync(); }
-  catch (e) { setStatus(notes.length ? `共 ${notes.length} 篇 · 离线，显示的是缓存` : '同步失败：' + e.message); }
-}
+async function main(){await openDB();let r=null;try{r=await pca.handleRedirectPromise()}catch(e){console.error(e)}
+ acct=(r&&r.account)||pca.getAllAccounts()[0];
+ if(!acct){$('#app').innerHTML='<div class="login"><h1>JZ-LifeOS</h1><p>登录 Microsoft 账号，读取 OneDrive 里的笔记</p><button class="btn" id="in" type="button">登录</button></div>';$('#in').onclick=()=>pca.loginRedirect({scopes:SCOPES});return}
+ pca.setActiveAccount(acct);shell();await load();if(!notes.length)setStatus('首次同步中，请稍候…');
+ try{await sync()}catch(e){setStatus(notes.length?`共 ${notes.length} 篇 · 离线，显示缓存`:'同步失败：'+e.message)}}
 main();
 </script>
 </body>
