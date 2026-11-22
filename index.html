@@ -47,6 +47,7 @@ dialog[open]{display:flex;flex-direction:column}dialog::backdrop{background:rgba
 .sec{margin-top:12px}.lb{font-weight:700;margin-bottom:5px}
 .l0 .lb{color:var(--mute);font-weight:500;font-size:13px}.l1 .lb{font-size:20px}.l2 .lb{font-size:17px}.l3 .lb,.l4 .lb{font-size:15px}
 .lf{padding-left:8px;margin-top:8px}.lf .lb{font-size:14px}.lf textarea{min-height:40px}
+.thumbs{display:flex;gap:8px;overflow-x:auto;padding:8px 0 2px}.thumbs img{height:140px;flex:none;border-radius:8px;border:1px solid var(--line);background:var(--bg);font-size:12px;color:var(--mute)}
 .ln.miss{color:var(--warn);opacity:1}.rc .t a{color:var(--ink);text-decoration:none;font-weight:600}.md img.miss{opacity:.5;font-size:13px}
 .l2{padding-left:8px}.l3{padding-left:16px}.l4,.l5,.l6{padding-left:24px}
 .sec textarea{line-height:1.65;resize:none;overflow:hidden;min-height:44px}
@@ -71,7 +72,7 @@ dialog[open]{display:flex;flex-direction:column}dialog::backdrop{background:rgba
 <body>
 <div class="wrap" id="app"></div>
 <dialog id="ed">
-  <div class="eh"><div><h2 id="et"></h2><p id="ep"></p></div><button class="btn g" id="x" type="button">关闭</button></div>
+  <div class="eh"><button class="btn g" id="bk" type="button" hidden>‹ 返回</button><div><h2 id="et"></h2><p id="ep"></p></div><button class="btn g" id="x" type="button">关闭</button></div>
   <div class="tabs"><button id="tE" type="button">编辑</button><button id="tV" type="button">预览</button></div>
   <div id="eb"></div>
   <div class="ef"><span id="es">没有改动</span><button class="btn" id="sv" type="button">保存修改</button></div>
@@ -148,10 +149,11 @@ function drawEd(){$('#et').textContent=cur.title;$('#ep').textContent=cur.path;$
  P.secs.forEach((s,i)=>{const lv=s.h?s.h.match(/^#+/)[0].length:0,t=s.h?s.h.replace(/^#+\s+/,''):'正文';
   if(s.fx){if(s.h)h+=`<div class="sec l${lv}"><div class="lb">${esc(t)}</div></div>`;if(s.fx.pre)h+=sec('说明',i+':pre',s.fx.pre,'f');s.fx.f.forEach((f,j)=>{h+=sec(f.l,i+':'+j,f.v,'f')})}
   else if(s.h===null){if(s.b)h+=sec('正文',i,s.b,0)}else h+=sec(t,i,s.b,lv)});
- b.innerHTML=h||'<div class="empty">这篇笔记是空的</div>';b.querySelectorAll('textarea').forEach(grow)}
-function openNote(p,foc){const n=notes.find(x=>x.path===p);if(!n)return;cur=n;P=parse(n.content);dirty=false;RO=n.cat===CFG.src;mode=RO?'view':(foc||n.cat===CFG.inbox)?'edit':'view';
+ const refs=[...new Set([...build(P).matchAll(/!\[\[([^\]|]+)(?:\|[^\]]*)?\]\]|!\[[^\]]*\]\(([^)\s]+)/g)].map(m=>m[2]||(IMG.test(m[1].trim())?m[1].trim():'')).filter(r=>r&&!/^data:/i.test(r)))].slice(0,12);
+ b.innerHTML=(refs.length?`<div class="thumbs">${refs.map(r=>`<img data-att="${esc(r)}" alt="${esc(r)}">`).join('')}</div>`:'')+(h||'<div class="empty">这篇笔记是空的</div>');b.querySelectorAll('textarea').forEach(grow);hydrate(b,cur.path)}
+function openNote(p,foc,back){const n=notes.find(x=>x.path===p);if(!n)return;if($('#ed').open){if(!back&&cur&&cur.path!==p)NAV.push(cur.path)}else NAV=[];cur=n;P=parse(n.content);dirty=false;RO=n.cat===CFG.src;mode=RO?'view':(foc||n.cat===CFG.inbox)?'edit':'view';
  if(foc&&!RO&&P.secs.findIndex(x=>x.h&&/^#+\s+My observations\s*$/i.test(x.h))<0)P.secs.push({h:'## My observations',b:'',fx:null});
- setDirty(false);$('#tE').hidden=RO;$('#sv').hidden=RO;drawEd();if(RO)$('#es').textContent='原始材料只读，不会被改动';if(!$('#ed').open)$('#ed').showModal();$('#eb').querySelectorAll('textarea').forEach(grow);$('#eb').scrollTop=0;
+ setDirty(false);$('#tE').hidden=RO;$('#sv').hidden=RO;$('#bk').hidden=!NAV.length;drawEd();if(RO)$('#es').textContent='原始材料只读，不会被改动';if(!$('#ed').open)$('#ed').showModal();$('#eb').querySelectorAll('textarea').forEach(grow);$('#eb').scrollTop=0;
  if(foc){const i=P.secs.findIndex(x=>x.h&&/^#+\s+My observations\s*$/i.test(x.h)),t=i>=0&&$(`#eb textarea[data-k="${i}"]`);if(t){t.focus();t.scrollIntoView({block:'center'})}}}
 function setDirty(d){dirty=d;$('#es').textContent=d?'有未保存的修改':'没有改动'}
 function closeEd(){if(dirty&&!confirm('有未保存的修改，确定放弃吗？'))return;$('#ed').close()}
@@ -182,7 +184,7 @@ async function capture(){const title=$('#ct').value.trim(),text=$('#cb').value.t
 
 /* 回看页：直接读取 00 Inbox / 01 Notes / 02 Sources / 03 Topics */
 const STS=['待我回看','已写想法','看过，暂不写'],IMG=/\.(png|jpe?g|gif|webp|svg|bmp)$/i,BLOB=new Map();
-let rvV='待我回看',ATT=new Map(),RO=false;
+let rvV='待我回看',ATT=new Map(),RO=false,NAV=[];
 const DATED=/^\d{4}-\d{2}-\d{2}/,isCap=n=>n.cat===CFG.src||n.cat===CFG.inbox||DATED.test(n.title);
 const unq=v=>v.replace(/^(["'])(.*)\1$/,'$2');
 function fmap(c){const m=c.match(/^---\r?\n([\s\S]*?)\r?\n---/),o={};if(!m)return o;let k=null,a;
@@ -201,7 +203,7 @@ function findAtt(ref,from){try{ref=decodeURIComponent(ref)}catch(e){}ref=ref.spl
  for(const x of [d+'/'+ref,ref].map(x=>x.replace(/^\//,'').toLowerCase()))if(ATT.has(x))return ATT.get(x)[0];
  const l=ATT.get(ref.split('/').pop().toLowerCase())||[];return l.find(p=>/attachment/i.test(p))||l[0]}
 async function hydrate(root,from){for(const im of root.querySelectorAll('img')){const src=im.getAttribute('data-att')||im.getAttribute('src')||'';
- if(/^(https?:|data:|blob:)/i.test(src)){im.referrerPolicy='no-referrer';continue}
+ if(/^(https?:|data:|blob:)/i.test(src)){im.referrerPolicy='no-referrer';if(!im.getAttribute('src'))im.src=src;continue}
  const p=findAtt(src,from);if(!p){im.alt='图片未找到：'+src;im.classList.add('miss');continue}
  try{if(!BLOB.has(p))BLOB.set(p,URL.createObjectURL(await(await g(`${vurl(p)}:/content`)).blob()));im.src=BLOB.get(p)}catch(e){im.alt='图片加载失败：'+p;im.classList.add('miss')}}}
 function card(n){const f=n.fm,s=f.review_status||[],cur=stOk(n)?s[0]:'',h=(n.content.match(/^#\s+(.+)$/m)||[])[1]||n.title,isN=n.cat===CFG.notes&&n.title!==CFG.tpl;
@@ -240,10 +242,11 @@ function shell(){$('#app').innerHTML=`
  $('#vc').onclick=e=>{const b=e.target.closest('button[data-v]');if(b){$('#q').value='';rvV=b.dataset.v;drawReview()}};
  $('#rv').onclick=e=>{const a=e.target.closest('a[data-p]');if(a){e.preventDefault();return openNote(a.dataset.p)}const w=e.target.closest('button[data-w]');if(w)return openNote(w.dataset.w,1);const o=e.target.closest('button[data-o]');if(o)openNote(o.dataset.o)};
  $('#rv').onchange=e=>{const x=e.target.closest('select[data-p]');if(x)setSt(x.dataset.p,x.value)}}
-$('#x').onclick=closeEd;$('#ed').addEventListener('cancel',e=>{if(dirty){e.preventDefault();closeEd()}});$('#sv').onclick=saveNote;
+$('#x').onclick=closeEd;$('#ed').addEventListener('close',()=>{NAV=[]});
+$('#bk').onclick=()=>{if(dirty&&!confirm('有未保存的修改，确定放弃吗？'))return;const p=NAV.pop();if(p)openNote(p,0,1)};$('#ed').addEventListener('cancel',e=>{if(dirty){e.preventDefault();closeEd()}});$('#sv').onclick=saveNote;
 $('#tE').onclick=()=>{mode='edit';drawEd()};$('#tV').onclick=()=>{mode='view';drawEd()};
 $('#eb').addEventListener('input',e=>{const t=e.target;if(!t.dataset.k)return;const k=t.dataset.k;if(k==='fm')P.fm=t.value;else{const[i,j]=k.split(':');if(j===undefined)P.secs[+i].b=t.value;else if(j==='pre')P.secs[+i].fx.pre=t.value;else P.secs[+i].fx.f[+j].v=t.value}grow(t);if(!dirty)setDirty(true)});
-$('#eb').addEventListener('click',e=>{const v=e.target.closest('a[data-v]');if(v){e.preventDefault();if(dirty&&!confirm('有未保存的修改，确定放弃吗？'))return;$('#ed').close();gotoView(v.dataset.v);return}const a=e.target.closest('a[data-w]');if(!a)return;e.preventDefault();const t=byTitle.get(a.dataset.w.toLowerCase());
+$('#eb').addEventListener('click',e=>{const th=e.target.closest('.thumbs img');if(th&&th.getAttribute('src')){window.open(th.src,'_blank');return}const v=e.target.closest('a[data-v]');if(v){e.preventDefault();if(dirty&&!confirm('有未保存的修改，确定放弃吗？'))return;$('#ed').close();gotoView(v.dataset.v);return}const a=e.target.closest('a[data-w]');if(!a)return;e.preventDefault();const t=byTitle.get(a.dataset.w.toLowerCase());
  if(!t)return toast('这篇笔记还不存在');if(dirty&&!confirm('有未保存的修改，确定放弃吗？'))return;openNote(t.path)});
 
 async function main(){await openDB();let r=null;try{r=await pca.handleRedirectPromise()}catch(e){console.error(e)}
