@@ -47,6 +47,7 @@ dialog[open]{display:flex;flex-direction:column}dialog::backdrop{background:rgba
 .sec{margin-top:12px}.lb{font-weight:700;margin-bottom:5px}
 .l0 .lb{color:var(--mute);font-weight:500;font-size:13px}.l1 .lb{font-size:20px}.l2 .lb{font-size:17px}.l3 .lb,.l4 .lb{font-size:15px}
 .lf{padding-left:8px;margin-top:8px}.lf .lb{font-size:14px}.lf textarea{min-height:40px}
+.tgs{flex-wrap:nowrap;overflow-x:auto;margin-top:0}.tgs:empty{display:none}.tgs button{flex:none;white-space:nowrap}
 .thumbs{display:flex;gap:8px;overflow-x:auto;padding:8px 0 2px}.thumbs img{height:140px;flex:none;border-radius:8px;border:1px solid var(--line);background:var(--bg);font-size:12px;color:var(--mute)}
 .ln.miss{color:var(--warn);opacity:1}.rc .t a{color:var(--ink);text-decoration:none;font-weight:600}.md img.miss{opacity:.5;font-size:13px}
 .l2{padding-left:8px}.l3{padding-left:16px}.l4,.l5,.l6{padding-left:24px}
@@ -183,22 +184,25 @@ async function capture(){const title=$('#ct').value.trim(),text=$('#cb').value.t
  $('#cs').disabled=false}
 
 /* 回看页：直接读取 00 Inbox / 01 Notes / 02 Sources / 03 Topics */
-const STS=['待我回看','已写想法','看过，暂不写'],IMG=/\.(png|jpe?g|gif|webp|svg|bmp)$/i,BLOB=new Map();
-let rvV='待我回看',ATT=new Map(),RO=false,NAV=[];
+const STS=['待我回看 / To review','已写想法 / Reflected','看过，暂不写 / Read'],LEG={'待我回看':STS[0],'已写想法':STS[1],'看过，暂不写':STS[2]},SH=v=>v.split(' / ')[0],IMG=/\.(png|jpe?g|gif|webp|svg|bmp)$/i,BLOB=new Map();
+let rvV='待我回看',ATT=new Map(),RO=false,NAV=[],TAG='';
 const DATED=/^\d{4}-\d{2}-\d{2}/,isCap=n=>n.cat===CFG.src||n.cat===CFG.inbox||DATED.test(n.title);
+const tagsOf=n=>[...new Set((n.fm.tags||[]).join(',').replace(/[\[\]"']/g,'').split(/[,\s]+/).map(x=>x.replace(/^#/,'').trim()).filter(Boolean))];
 const unq=v=>v.replace(/^(["'])(.*)\1$/,'$2');
 function fmap(c){const m=c.match(/^---\r?\n([\s\S]*?)\r?\n---/),o={};if(!m)return o;let k=null,a;
  for(const l of m[1].split(/\r?\n/)){if(a=l.match(/^([\w\u4e00-\u9fa5-]+):[ \t]*(.*)$/)){k=a[1];o[k]=a[2].trim()?[unq(a[2].trim())]:[]}else if(k&&(a=l.match(/^\s*-\s+(.*)$/)))o[k].push(unq(a[1].trim()))}return o}
-const stOk=n=>{const s=n.fm.review_status||[];return s.length===1&&STS.includes(s[0])};
+const stOk=n=>{const s=n.fm.review_status||[];return s.length===1&&(STS.includes(s[0])||!!LEG[s[0]])};
+const stv=n=>{const s=(n.fm.review_status||[])[0];return LEG[s]||s};
 const needChk=n=>(n.fm.review_status||[]).length>0&&!stOk(n);
 const VWS=()=>['收件箱','待我回看','我写过的','看板','检查状态','全部笔记','原始材料',...notes.filter(n=>n.cat===CFG.topics).map(n=>n.title)];
-function listFor(v){const P0=notes.filter(n=>n.cat===CFG.notes&&n.title!==CFG.tpl),s=n=>n.fm.review_status||[];
- if(v==='收件箱')return notes.filter(n=>n.cat===CFG.inbox&&n.title!==CFG.tpl);
+function listBase(v){const P0=notes.filter(n=>n.cat===CFG.notes&&n.title!==CFG.tpl&&(n.fm.type||[]).includes('source-summary')),s=n=>n.fm.review_status||[];
+ if(v==='收件箱')return notes.filter(n=>n.cat===CFG.inbox&&n.title!==CFG.tpl&&n.content.length>0);
  if(v==='原始材料')return notes.filter(n=>n.cat===CFG.src);
- if(v==='待我回看')return P0.filter(n=>!s(n).length||(stOk(n)&&s(n)[0]==='待我回看'));
- if(v==='我写过的')return P0.filter(n=>stOk(n)&&s(n)[0]==='已写想法');
+ if(v==='待我回看')return P0.filter(n=>!s(n).length||(stOk(n)&&stv(n)===STS[0]));
+ if(v==='我写过的')return P0.filter(n=>stOk(n)&&stv(n)===STS[1]);
  if(v==='检查状态')return P0.filter(needChk);
  const t=notes.find(n=>n.cat===CFG.topics&&n.title===v);return t?P0.filter(n=>n.lk.includes(t)):P0}
+const listFor=v=>listBase(v).filter(n=>!TAG||tagsOf(n).includes(TAG));
 function findAtt(ref,from){try{ref=decodeURIComponent(ref)}catch(e){}ref=ref.split('|')[0].trim().replace(/^\.\//,'');const d=from.includes('/')?from.slice(0,from.lastIndexOf('/')):'';
  for(const x of [d+'/'+ref,ref].map(x=>x.replace(/^\//,'').toLowerCase()))if(ATT.has(x))return ATT.get(x)[0];
  const l=ATT.get(ref.split('/').pop().toLowerCase())||[];return l.find(p=>/attachment/i.test(p))||l[0]}
@@ -206,20 +210,23 @@ async function hydrate(root,from){for(const im of root.querySelectorAll('img')){
  if(/^(https?:|data:|blob:)/i.test(src)){im.referrerPolicy='no-referrer';if(!im.getAttribute('src'))im.src=src;continue}
  const p=findAtt(src,from);if(!p){im.alt='图片未找到：'+src;im.classList.add('miss');continue}
  try{if(!BLOB.has(p))BLOB.set(p,URL.createObjectURL(await(await g(`${vurl(p)}:/content`)).blob()));im.src=BLOB.get(p)}catch(e){im.alt='图片加载失败：'+p;im.classList.add('miss')}}}
-function card(n){const f=n.fm,s=f.review_status||[],cur=stOk(n)?s[0]:'',h=(n.content.match(/^#\s+(.+)$/m)||[])[1]||n.title,isN=n.cat===CFG.notes&&n.title!==CFG.tpl;
- const A=(t,l)=>`<a href="#" data-p="${esc(t.path)}">${esc(l)}</a>`,tp=n.lk.filter(t=>t.cat===CFG.topics).map(t=>A(t,t.title)).join('');
+function card(n){const f=n.fm,s=f.review_status||[],cur=stOk(n)?stv(n):'',h=(n.content.match(/^#\s+(.+)$/m)||[])[1]||n.title,isN=n.cat===CFG.notes&&n.title!==CFG.tpl;
+ const A=(t,l)=>`<a href="#" data-p="${esc(t.path)}">${esc(l)}</a>`,tp=n.lk.filter(t=>t.cat===CFG.topics).map(t=>A(t,t.title)).join('')+tagsOf(n).map(t=>`<a href="#" data-t="${esc(t)}">#${esc(t)}</a>`).join('');
  const isS=isCap(n),rel=isS?n.bk.filter(b=>b.cat===CFG.notes&&!isCap(b)):n.lk.filter(isCap),lab=isS?'知识笔记':'原始材料';
- const L=rel.slice(0,4).map((t,i)=>A(t,lab+(rel.length>1?i+1:''))).join(' · ')+(rel.length&&n.cat===CFG.inbox?' · 已有知识笔记，可归档到 02 Sources':'');
+ const fl=k=>(n.fm[k]||[]).map(v=>(v.match(/\[\[([^\]|#]+)/)||[])[1]).filter(Boolean).map(x=>byTitle.get(x.trim().split('/').pop().toLowerCase())).filter(Boolean),so=isS?[]:fl('source_note'),tr=isS?[]:fl('transcript'),rel2=rel.filter(t=>!so.includes(t)&&!tr.includes(t));
+ const L=[...so.slice(0,3).map(t=>A(t,'原始来源')),...tr.slice(0,3).map(t=>A(t,'逐字稿')),...rel2.slice(0,4).map((t,i)=>A(t,lab+(rel2.length>1?i+1:'')))].join(' · ')+(rel.length&&n.cat===CFG.inbox?' · 已有知识笔记，可归档到 02 Sources':'');
  const ph=cur?'':`<option value="" selected disabled>${s.length?'需检查：'+esc(s.join('、')):'（未设置）'}</option>`;
- const act=isN?`<div class="ra"><select data-p="${esc(n.path)}" aria-label="回看状态">${ph}${STS.map(x=>`<option${x===cur?' selected':''}>${x}</option>`).join('')}</select><button class="btn" data-w="${esc(n.path)}" type="button">写想法</button></div>`
+ const act=isN?`<div class="ra"><select data-p="${esc(n.path)}" aria-label="回看状态">${ph}${STS.map(x=>`<option value="${esc(x)}"${x===cur?' selected':''}>${esc(SH(x))}</option>`).join('')}</select><button class="btn" data-w="${esc(n.path)}" type="button">写想法</button></div>`
   :n.cat===CFG.inbox?`<div class="ra"><button class="btn g" data-o="${esc(n.path)}" type="button">编辑</button></div>`:'';
  return`<div class="rc"><div class="t"><a href="#" data-p="${esc(n.path)}">${esc(h)}</a></div><div class="ln">${esc(n.cat)} · ${new Date(n.mtime).toLocaleDateString('zh-CN')}</div>${tp?`<div class="tp">${tp}</div>`:''}${L?`<div class="ln">${L}</div>`:n.cat===CFG.src?'<div class="ln miss">已归档，但没有知识笔记引用它</div>':''}${act}</div>`}
-function drawReview(){const el=$('#rv');if(!el)return;const q=($('#q').value||'').trim().toLowerCase(),V=VWS();if(!V.includes(rvV))rvV='待我回看';
+function drawReview(){const el=$('#rv');if(!el)return;const q=($('#q').value||'').trim().toLowerCase(),V=VWS(),tc=new Map();
+ for(const n of notes)for(const t of tagsOf(n))tc.set(t,(tc.get(t)||0)+1);if(TAG&&!tc.has(TAG))TAG='';
+ $('#tg').innerHTML=[...tc].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0])).map(([t,c])=>`<button type="button" data-t="${esc(t)}" class="${t===TAG?'on':''}">#${esc(t)}<i>${c}</i></button>`).join('');if(!V.includes(rvV))rvV='待我回看';
  $('#vc').innerHTML=V.map(v=>`<button type="button" data-v="${esc(v)}" class="${v===rvV&&!q?'on':''}">${esc(v)}<i>${listFor(v==='看板'?'全部笔记':v).length}</i></button>`).join('');
- if(q){const r=notes.filter(n=>n.lc.includes(q)).slice(0,80);el.innerHTML=`<div class="ln">搜索结果 ${r.length} 条</div>`+(r.map(card).join('')||'<div class="empty">没有匹配的笔记</div>');return}
+ if(q){const r=notes.filter(n=>n.lc.includes(q)&&(!TAG||tagsOf(n).includes(TAG))).slice(0,80);el.innerHTML=`<div class="ln">搜索结果 ${r.length} 条</div>`+(r.map(card).join('')||'<div class="empty">没有匹配的笔记</div>');return}
  if(rvV==='看板'){const all=listFor('全部笔记'),sv=n=>n.fm.review_status||[];
-  el.innerHTML='<div class="kb">'+[...STS,'需检查'].map(c=>{const r=all.filter(n=>c==='需检查'?needChk(n):stOk(n)?sv(n)[0]===c:c==='待我回看'&&!sv(n).length);
-   return r.length||c!=='需检查'?`<div class="kc"><h3>${esc(c)} <i>${r.length}</i></h3>${r.slice(0,60).map(card).join('')||'<div class="empty">空</div>'}</div>`:''}).join('')+'</div>';return}
+  el.innerHTML='<div class="kb">'+[...STS,'需检查'].map(c=>{const r=all.filter(n=>c==='需检查'?needChk(n):stOk(n)?stv(n)===c:c===STS[0]&&!sv(n).length);
+   return r.length||c!=='需检查'?`<div class="kc"><h3>${esc(SH(c))} <i>${r.length}</i></h3>${r.slice(0,60).map(card).join('')||'<div class="empty">空</div>'}</div>`:''}).join('')+'</div>';return}
  const r=listFor(rvV);el.innerHTML=r.length?r.slice(0,150).map(card).join(''):'<div class="empty">这个视图里暂时没有笔记</div>'}
 function gotoView(v){rvV=v==='回看状态看板'?'看板':v;drawReview()}
 function withStatus(c,val){const m=c.match(/^---\r?\n([\s\S]*?)\r?\n---/);if(!m)return null;const nl=c.includes('\r\n')?'\r\n':'\n',y=m[1].split(/\r?\n/),i=y.findIndex(l=>/^review_status:/.test(l));let j=i+1;
@@ -228,7 +235,7 @@ function withStatus(c,val){const m=c.match(/^---\r?\n([\s\S]*?)\r?\n---/);if(!m)
 async function setSt(p,val){const n=notes.find(x=>x.path===p);if(!n||n.cat!==CFG.notes)return toast('只有 01 Notes 里的笔记可以改状态');
  let out=withStatus(n.content,val);if(!out)out=`---\nreview_status:\n  - ${val}\n---\n\n`+n.content;
  try{const h={'Content-Type':'text/markdown'};if(n.etag)h['If-Match']=n.etag;const j=await(await g(`${vurl(p)}:/content`,{method:'PUT',headers:h,body:out})).json();
-  await dbPut({path:p,mtime:j.lastModifiedDateTime,etag:j.eTag,content:out});await load();toast('已改为：'+val)}
+  await dbPut({path:p,mtime:j.lastModifiedDateTime,etag:j.eTag,content:out});await load();toast('已改为：'+SH(val))}
  catch(e){toast(e.status===412?'这篇笔记刚在别处被改过，已刷新，请再试一次':'保存失败，请检查网络后重试');if(e.status===412)sync().catch(()=>{});drawReview()}}
 
 function shell(){$('#app').innerHTML=`
@@ -236,11 +243,12 @@ function shell(){$('#app').innerHTML=`
  <section class="cap"><h2>Quick Capture</h2><input type="text" id="ct" placeholder="标题（可不填）" autocomplete="off"><textarea id="cb" placeholder="想到什么，先记下来…"></textarea>
   <div class="row"><button class="btn" id="cs" type="button">存入 Inbox</button></div></section>
  <input type="search" id="q" placeholder="搜索全部笔记的标题和正文" autocomplete="off" style="margin-top:14px">
- <div class="chips" id="vc"></div><div id="rv"></div>`;
+ <div class="chips" id="vc"></div><div class="chips tgs" id="tg"></div><div id="rv"></div>`;
  let tm;$('#q').oninput=()=>{clearTimeout(tm);tm=setTimeout(drawReview,200)};
  $('#cs').onclick=capture;$('#out').onclick=()=>pca.logoutRedirect({account:acct});
  $('#vc').onclick=e=>{const b=e.target.closest('button[data-v]');if(b){$('#q').value='';rvV=b.dataset.v;drawReview()}};
- $('#rv').onclick=e=>{const a=e.target.closest('a[data-p]');if(a){e.preventDefault();return openNote(a.dataset.p)}const w=e.target.closest('button[data-w]');if(w)return openNote(w.dataset.w,1);const o=e.target.closest('button[data-o]');if(o){openNote(o.dataset.o);mode='edit';drawEd();$('#eb').querySelectorAll('textarea').forEach(grow)}};
+ $('#tg').onclick=e=>{const b=e.target.closest('button[data-t]');if(b){TAG=TAG===b.dataset.t?'':b.dataset.t;drawReview()}};
+ $('#rv').onclick=e=>{const tg=e.target.closest('a[data-t]');if(tg){e.preventDefault();TAG=TAG===tg.dataset.t?'':tg.dataset.t;drawReview();return}const a=e.target.closest('a[data-p]');if(a){e.preventDefault();return openNote(a.dataset.p)}const w=e.target.closest('button[data-w]');if(w)return openNote(w.dataset.w,1);const o=e.target.closest('button[data-o]');if(o){openNote(o.dataset.o);mode='edit';drawEd();$('#eb').querySelectorAll('textarea').forEach(grow)}};
  $('#rv').onchange=e=>{const x=e.target.closest('select[data-p]');if(x)setSt(x.dataset.p,x.value)}}
 $('#x').onclick=closeEd;$('#ed').addEventListener('close',()=>{NAV=[]});
 $('#bk').onclick=()=>{if(dirty&&!confirm('有未保存的修改，确定放弃吗？'))return;const p=NAV.pop();if(p)openNote(p,0,1)};$('#ed').addEventListener('cancel',e=>{if(dirty){e.preventDefault();closeEd()}});$('#sv').onclick=saveNote;
